@@ -18,7 +18,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 15
 
         # hitbox used for collision checks (smaller than the visible sprite)
-        self.hitbox = self.rect.inflate(-40, -20)
+        self.hitbox = self.rect.inflate(-10, -70)
 
         # group that holds bullets this player has fired
         self.bullets = pygame.sprite.Group()
@@ -46,6 +46,6 @@ class Player(pygame.sprite.Sprite):
         """
         from bullet import Bullet
 
-        bullet = Bullet(self.rect.centerx, self.rect.top)
+        bullet = Bullet(self.rect.centerx, self.rect.top + 50)
         self.bullets.add(bullet)
         return bullet

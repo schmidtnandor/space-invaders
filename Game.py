@@ -23,7 +23,7 @@ class Game:
             screen.blit(player.image, player.rect)
 
             # draw hitbox (optional – useful for collision debugging)
-            pygame.draw.rect(screen, (255, 0, 0), player.hitbox, 2)
+            #pygame.draw.rect(screen, (255, 0, 0), player.hitbox, 2)
 
             # player movement and bullet handling
             player.check_input()
