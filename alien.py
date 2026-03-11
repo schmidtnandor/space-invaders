@@ -2,21 +2,24 @@ import pygame
 from pygame.sprite import Sprite
 import random
 
+
 class Alien(Sprite):
     """Egy osztály, amely egyetlen idegent képvisel a flottában."""
-    # Settings
-    alien_speed: int 
-    alien_shoot_intensity: int 
-    alien_shoot_damage: int 
-    alien_hp: int 
 
-    def __init__(self, screen: pygame.Surface):
+    # Settings
+    alien_speed: int
+    alien_shoot_intensity: int
+    alien_shoot_damage: int
+    alien_hp: int
+
+    def __init__(self, screen_width: int, screen_height: int):
         """Az idegen inicializálása és kezdőpozíciójának beállítása."""
-        super().__init__() # Egyszerűbb hívás
-        self.screen = screen
+        super().__init__()  # Egyszerűbb hívás
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
         # Kép betöltése - Figyelj a perjelre!
-        self.image = pygame.image.load('grafika/enemy.png')
+        self.image = pygame.image.load("grafika/enemy.png")
         self.rect = self.image.get_rect()
 
         # Settings
@@ -25,25 +28,19 @@ class Alien(Sprite):
         self.alien_shoot_damage: int = 1
         self.alien_hp: int = 1
 
-
-        # Kezdőpozíció
-        self.rect.x = self.rect.width
-        self.rect.y = self.rect.height
-
         # Lebegőpontos pozíció tárolása a pontos mozgáshoz
-        self.rect.x = random.randint(0, screen.get_width() - self.rect.width)
-        self.rect.y = random.randint(0, 200) # A felső sávban jelenjenek meg
+        self.rect.x = random.randint(0, screen_width - self.rect.width)
+        self.rect.y = random.randint(0, 200)  # A felső sávban jelenjenek meg
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
 
     def check_edges(self):
         """Igazat ad, ha az idegen elérte a képernyő szélét."""
-        screen_rect = self.screen.get_rect()
-        if self.rect.right >= screen_rect.right:
+        if self.rect.right >= self.screen_width:
             return True
         elif self.rect.left <= 0:
             return True
-        return False # Explicit False, ha nincs a szélen
+        return False  # Explicit False, ha nincs a szélen
 
     def mozgas(self):
         """Véletlenszerű mozgás minden irányba."""
@@ -60,14 +57,25 @@ class Alien(Sprite):
         self.rect.y = int(self.y)
 
         # Határok ellenőrzése (hogy ne menjenek ki a képernyőről)
-    def check_screen(self):
-        screen_rect = self.screen.get_rect()
-        
-        if self.rect.right >= screen_rect.right or self.rect.left <= 0:
-            self.x -= (self.rect.x - self.rect.x) # Megállítja vagy visszafordíthatod
-        if self.rect.bottom >= screen_rect.bottom or self.rect.top <= 0:
-            self.y = self.y # Itt is korlátozhatod a függőleges mozgást
 
-    def blitme(self):
+    def check_screen(self):
+        """Korlátozza az idegent a képernyőn belülre."""
+        # Horizontális korlátok
+        if self.rect.right >= self.screen_width:
+            self.rect.right = self.screen_width
+            self.x = float(self.rect.x)
+        elif self.rect.left <= 0:
+            self.rect.left = 0
+            self.x = float(self.rect.x)
+
+        # Vertikális korlátok
+        if self.rect.bottom >= self.screen_height:
+            self.rect.bottom = self.screen_height
+            self.y = float(self.rect.y)
+        elif self.rect.top <= 0:
+            self.rect.top = 0
+            self.y = float(self.rect.y)
+
+    def blitme(self, screen: pygame.Surface):
         """Kirajzolás."""
-        self.screen.blit(self.image, self.rect)
+        screen.blit(self.image, self.rect)
