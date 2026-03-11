@@ -4,11 +4,10 @@ from pygame.sprite import Sprite
 class Alien(Sprite):
     """Egy osztály, amely egyetlen idegent képvisel a flottában."""
 
-    def __init__(self, ai_settings: Settings, screen: pygame.Surface):
+    def __init__(self, screen: pygame.Surface):
         """Az idegen inicializálása és kezdőpozíciójának beállítása."""
         super().__init__() # Egyszerűbb hívás
         self.screen = screen
-        self.ai_settings = ai_settings
 
         # Kép betöltése - Figyelj a perjelre!
         self.image = pygame.image.load('grafika/enemy.png')
@@ -30,10 +29,10 @@ class Alien(Sprite):
             return True
         return False # Explicit False, ha nincs a szélen
 
-    def update(self):
-        """Mozgatás jobbra vagy balra."""
-        self.x += (self.ai_settings.alien_speed_factor * self.ai_settings.fleet_direction)
-        self.rect.x = int(self.x) # Konvertáljuk egész számmá a rect számára
+    # def update(self):
+    #     """Mozgatás jobbra vagy balra."""
+    #     self.x += (self.ai_settings.alien_speed_factor * self.ai_settings.fleet_direction)
+    #     self.rect.x = int(self.x) # Konvertáljuk egész számmá a rect számára
 
     def blitme(self):
         """Kirajzolás."""

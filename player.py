@@ -5,7 +5,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         # Kép betöltése és optimalizálása
         # A 'player.png' helyett írd be a saját fájlod nevét!
-        self.image = pygame.image.load('grafika/enemy.png').convert_alpha()
+        self.image = pygame.image.load('grafika/player.png').convert_alpha()
         
         # Ha túl nagy a kép, itt átméretezheted (pl. 50x50 pixelre)
         self.image = pygame.transform.scale(self.image, (50, 50))
