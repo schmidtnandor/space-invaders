@@ -31,6 +31,8 @@ class Alien(Sprite):
         self.rect.y = self.rect.height
 
         # Lebegőpontos pozíció tárolása a pontos mozgáshoz
+        self.rect.x = random.randint(0, screen.get_width() - self.rect.width)
+        self.rect.y = random.randint(0, 200) # A felső sávban jelenjenek meg
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
 
