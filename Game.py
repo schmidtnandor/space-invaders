@@ -2,6 +2,7 @@ import pygame
 import sys
 from player import Player
 from alien import Alien
+from block import Block
 
 
 class Game:
@@ -19,6 +20,10 @@ class Game:
 
         # Initialize player
         self.player = Player(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+
+        # Initialize blocks (cover/bunkers)
+        self.blocks = pygame.sprite.Group()
+        self._create_blocks()
 
         # Initialize aliens
         self.aliens = pygame.sprite.Group()
@@ -47,6 +52,20 @@ class Game:
                 new_alien = Alien(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
                 self.aliens.add(new_alien)
 
+    def _create_blocks(self) -> None:
+        """Create protective blocks in front of the player."""
+        # Create four larger blocks with more spacing, placed closer to the player.
+        block_count = 4
+        spacing = 150
+        total_width = block_count * Block.WIDTH + (block_count - 1) * spacing
+        start_x = (self.SCREEN_WIDTH - total_width) // 2
+        # Place blocks very close to the player (player bullets still stop at the blocks).
+        start_y = self.player.rect.top - 60
+
+        for i in range(block_count):
+            x = start_x + i * (Block.WIDTH + spacing)
+            self.blocks.add(Block(x, start_y))
+
     def update(self) -> None:
         self.player.check_input()
         self.player.bullets.update()
@@ -55,14 +74,23 @@ class Game:
             alien.mozgas()
             alien.check_screen()
 
-        # Check collisions between bullets and aliens
-        for bullet in self.player.bullets:
+        # Player bullets should not pass through blocks.
+        # The blocks don't take damage from the player, but they still stop bullets.
+        for bullet in list(self.player.bullets):
+            hit_blocks = pygame.sprite.spritecollide(bullet, self.blocks, False)
+            if hit_blocks:
+                bullet.kill()
+                continue
+
             hit_aliens = pygame.sprite.spritecollide(bullet, self.aliens, True)
             if hit_aliens:
                 bullet.kill()
 
     def draw(self) -> None:
         self.screen.fill((30, 30, 30))  # Background color
+
+        # Draw blocks
+        self.blocks.draw(self.screen)
 
         # Draw player
         self.screen.blit(self.player.image, self.player.rect)
