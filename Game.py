@@ -8,6 +8,10 @@ from block import Block
 class Game:
     SCREEN_WIDTH = 1200
     SCREEN_HEIGHT = 800
+    
+    # Alien configuration
+    ALIEN_ROWS = 5  # Number of rows of aliens
+    ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
 
     def __init__(self) -> None:
         pygame.init()
@@ -27,10 +31,42 @@ class Game:
 
         # Initialize aliens
         self.aliens = pygame.sprite.Group()
-        self.SPAWN_EVENT = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.SPAWN_EVENT, 2000)  # Spawn alien every 2 seconds
+        
+        # Fleet movement state (synchronized across all aliens)
+        self.fleet_moving_right = True
+        self.fleet_is_dropping = False
+        self.fleet_drop_speed = 0
+        self.fleet_edge_cooldown = 0
+        self.FLEET_DROP_AMOUNT = 40
+        
+        # Create initial rows of aliens
+        self._create_initial_aliens()
 
         self.run()
+
+    def _create_initial_aliens(self) -> None:
+        """Create five rows of aliens at game start with strict spacing enforcement."""
+        # Get image dimensions to calculate proper spacing
+        temp_alien = Alien(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, 0, 0)
+        alien_width = temp_alien.rect.width
+        alien_height = temp_alien.rect.height
+        temp_alien.kill()  # Remove temporary alien
+        
+        # Calculate spacing with strict minimum gap to prevent any touching
+        min_gap = 8  # Match MIN_SPACING in Alien class to ensure no overlaps
+        total_width_per_alien = alien_width + min_gap
+        row_spacing = alien_height + min_gap  # Vertical spacing between rows
+        
+        # Create five rows with precise positioning
+        for row in range(self.ALIEN_ROWS):
+            x = 20  # Start position from left edge with padding
+            y = self.ALIEN_INITIAL_ROW_Y + (row * row_spacing)
+            
+            # Fill each row with properly spaced aliens
+            while x + alien_width < self.SCREEN_WIDTH - 20:  # Leave padding on right edge
+                alien = Alien(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, x, y)
+                self.aliens.add(alien)
+                x += total_width_per_alien
 
     def run(self) -> None:
         while self.running:
@@ -48,9 +84,48 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     self.player.shoot()
-            elif event.type == self.SPAWN_EVENT:
-                new_alien = Alien(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
-                self.aliens.add(new_alien)
+
+    def _update_fleet_state(self) -> None:
+        """Update synchronized fleet movement state with precise boundary detection.
+        
+        Ensures all aliens respond simultaneously to boundary hits with no sticking.
+        """
+        # Decrease cooldown
+        if self.fleet_edge_cooldown > 0:
+            self.fleet_edge_cooldown -= 1
+        
+        # Handle dropping phase with acceleration
+        if self.fleet_is_dropping:
+            self.fleet_drop_speed = min(self.fleet_drop_speed + 0.5, self.FLEET_DROP_AMOUNT / 5)
+        
+        # Check if any alien has hit the edge and needs to reverse (only when not dropping)
+        if self.fleet_edge_cooldown <= 0 and not self.fleet_is_dropping:
+            edge_detected = False
+            
+            if self.fleet_moving_right:
+                # Check for right edge collision - use a threshold to catch it cleanly
+                for alien in self.aliens:
+                    if alien.rect.right >= self.SCREEN_WIDTH - 2:
+                        edge_detected = True
+                        break
+            else:
+                # Check for left edge collision
+                for alien in self.aliens:
+                    if alien.rect.left <= 2:
+                        edge_detected = True
+                        break
+            
+            if edge_detected:
+                # Reverse direction and start dropping
+                self.fleet_moving_right = not self.fleet_moving_right
+                self.fleet_is_dropping = True
+                self.fleet_drop_speed = 0
+                self.fleet_edge_cooldown = 5  # Prevent re-triggering for 5 frames
+        
+        # Complete drop phase
+        if self.fleet_is_dropping and self.fleet_drop_speed >= self.FLEET_DROP_AMOUNT / 5:
+            self.fleet_is_dropping = False
+            self.fleet_drop_speed = 0
 
     def _create_blocks(self) -> None:
         """Create protective blocks in front of the player."""
@@ -69,10 +144,19 @@ class Game:
     def update(self) -> None:
         self.player.check_input()
         self.player.bullets.update()
+        
+        # Update synchronized fleet state
+        self._update_fleet_state()
 
+        # Move all aliens with fleet synchronization
         for alien in self.aliens:
-            alien.mozgas()
+            alien.update_movement(
+                self.fleet_moving_right,
+                self.fleet_is_dropping,
+                self.fleet_drop_speed
+            )
             alien.check_screen()
+            alien.check_collision_with_aliens(self.aliens)
 
         # Player bullets should not pass through blocks.
         # The blocks don't take damage from the player, but they still stop bullets.
