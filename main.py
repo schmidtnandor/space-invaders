@@ -1,8 +1,9 @@
 from Game import Game
+from menu import Menu
 
 
 def main() -> None:
-    game = Game()
+    menu = Menu()
 
 
 if __name__ == "__main__":

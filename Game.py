@@ -14,7 +14,7 @@ class Game:
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
 
     def __init__(self) -> None:
-        pygame.init()
+        
         self.screen: pygame.Surface = pygame.display.set_mode(
             (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
         )
