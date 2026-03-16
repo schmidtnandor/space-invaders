@@ -4,43 +4,86 @@ import pygame
 class Block(pygame.sprite.Sprite):
     """A destructible cover block in front of the player.
 
-    Each block has a limited number of hit points. When a bullet hits the
-    block, the hit points decrease and the block changes appearance.
+    Each block is divided into 9x9 cells. Bullets destroy one cell at a time.
     """
 
-    # Made larger so there are three substantial cover pieces in front of the player.
-    WIDTH = 100
-    HEIGHT = 50
-    MAX_HP = 5
-
-    # Colors keyed by remaining hit points (1..MAX_HP)
-    COLORS = {
-        5: (60, 200, 60),
-        4: (120, 200, 60),
-        3: (200, 200, 60),
-        2: (200, 120, 60),
-        1: (200, 60, 60),
-    }
+    WIDTH = 108
+    HEIGHT = 56
+    CELL_SIZE = 9
+    DEAD_COLOR = (0, 0, 0)
 
     def __init__(self, x: int, y: int) -> None:
         super().__init__()
-        self.hp = self.MAX_HP
         self.image = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         self.rect = self.image.get_rect(topleft=(x, y))
+
+        self.cols = (self.WIDTH + self.CELL_SIZE - 1) // self.CELL_SIZE
+        self.rows = (self.HEIGHT + self.CELL_SIZE - 1) // self.CELL_SIZE
+        self.cells = [[True for _ in range(self.cols)] for _ in range(self.rows)]
+
+        # Track remaining grid hits (starting at 72 as requested).
+        self.damage = 72
         self._update_image()
 
+    def _alive_color(self) -> tuple[int, int, int]:
+        if self.damage <= 12:
+            return (255, 0, 0)
+        if self.damage <= 24:
+            return (255, 99, 0)
+        if self.damage <= 36:
+            return (255, 132, 0)
+        if self.damage <= 48:
+            return (255, 195, 0)
+        if self.damage <= 60:
+            return (191, 201, 0)
+        return (60, 200, 60)
+
     def _update_image(self) -> None:
-        """Redraw the block based on its remaining hit points."""
-        color = self.COLORS.get(self.hp, (50, 50, 50))
-        self.image.fill(color)
+        alive_color = self._alive_color()
+        self.image.fill((0, 0, 0, 0))
+        for row in range(self.rows):
+            for col in range(self.cols):
+                color = alive_color if self.cells[row][col] else self.DEAD_COLOR
+                cell_rect = pygame.Rect(
+                    col * self.CELL_SIZE,
+                    row * self.CELL_SIZE,
+                    self.CELL_SIZE,
+                    self.CELL_SIZE,
+                )
+                pygame.draw.rect(self.image, color, cell_rect)
 
-        # Draw a subtle outline to make it easier to see at low HP.
-        pygame.draw.rect(self.image, (40, 40, 40), self.image.get_rect(), 2)
+    def take_damage_at(self, x: int, y: int) -> bool:
+        local_x = x - self.rect.left
+        local_y = y - self.rect.top
+        if local_x < 0 or local_y < 0 or local_x >= self.WIDTH or local_y >= self.HEIGHT:
+            return False
 
-    def hit(self) -> None:
-        """Apply damage to the block and destroy it when HP reaches zero."""
-        self.hp -= 1
-        if self.hp <= 0:
+        col = local_x // self.CELL_SIZE
+        row = local_y // self.CELL_SIZE
+
+        if row < 0 or row >= self.rows or col < 0 or col >= self.cols:
+            return False
+
+        if not self.cells[row][col]:
+            return False
+
+        self.cells[row][col] = False
+        self.damage -= 1
+        if self.damage < 0:
+            self.damage = 0
+
+        cell_rect = pygame.Rect(
+            col * self.CELL_SIZE,
+            row * self.CELL_SIZE,
+            self.CELL_SIZE,
+            self.CELL_SIZE,
+        )
+        pygame.draw.rect(self.image, self.DEAD_COLOR, cell_rect)
+
+        # Redraw alive cells with updated color after each hit.
+        self._update_image()
+
+        if all(not alive for row_cells in self.cells for alive in row_cells):
             self.kill()
-        else:
-            self._update_image()
+
+        return True

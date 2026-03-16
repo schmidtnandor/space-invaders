@@ -183,9 +183,22 @@ class Game:
             if hit_aliens:
                 bullet.kill()
         
-        # Check if alien bullets hit the player
-        hit_player = pygame.sprite.spritecollide(self.player, self.alien_bullets, True)
-        # TODO: Handle player getting hit (reduce health, etc.)
+        # Alien bullets should also collide with blocks and damage 9x9 cells.
+        for bullet in list(self.alien_bullets):
+            blocked = False
+            for block in self.blocks:
+                if block.rect.colliderect(bullet.rect):
+                    if block.take_damage_at(bullet.rect.centerx, bullet.rect.centery):
+                        bullet.kill()
+                        blocked = True
+                        break
+            if blocked:
+                continue
+
+            # Check collision with player after block handling.
+            if self.player.rect.colliderect(bullet.rect):
+                bullet.kill()
+                # TODO: Handle player getting hit (reduce health, etc.)
 
     def draw(self) -> None:
         self.screen.fill((30, 30, 30))  # Background color
