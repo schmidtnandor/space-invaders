@@ -232,6 +232,33 @@ class Game:
                 if self.player.health <= 0:
                     self.running = False
 
+    def _draw_health_bar(self) -> None:
+        """Draw the player's health bar at the top of the screen."""
+        bar_width = 200
+        bar_height = 20
+        bar_x = 20
+        bar_y = 20
+
+        # Draw background (dark)
+        pygame.draw.rect(self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+
+        # Draw health fill
+        health_fill_width = (self.player.health / 20) * bar_width
+        health_color = self.player.get_health_color()
+        pygame.draw.rect(
+            self.screen, health_color, (bar_x, bar_y, health_fill_width, bar_height)
+        )
+
+        # Draw border
+        pygame.draw.rect(self.screen, (200, 200, 200), (bar_x, bar_y, bar_width, bar_height), 2)
+
+        # Draw health text
+        font = pygame.font.Font(None, 24)
+        health_text = font.render(
+            f"Health: {self.player.health}/20", True, (200, 200, 200)
+        )
+        self.screen.blit(health_text, (bar_x + bar_width + 15, bar_y + 2))
+
     def draw(self) -> None:
         """Draw all renderable elements to the screen."""
         self.screen.fill((30, 30, 30))  # Background color
@@ -251,6 +278,9 @@ class Game:
 
         # Draw player bullets
         self.player.bullets.draw(self.screen)
+
+        # Draw health bar
+        self._draw_health_bar()
 
         pygame.display.flip()
 
