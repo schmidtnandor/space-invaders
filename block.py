@@ -8,7 +8,7 @@ class Block(pygame.sprite.Sprite):
     """
 
     WIDTH = 108
-    HEIGHT = 56
+    HEIGHT = 45
     CELL_SIZE = 9
     DEAD_COLOR = (0, 0, 0)
 
@@ -22,19 +22,19 @@ class Block(pygame.sprite.Sprite):
         self.cells = [[True for _ in range(self.cols)] for _ in range(self.rows)]
 
         # Track remaining grid hits (starting at 72 as requested).
-        self.damage = 72
+        self.damage = 60
         self._update_image()
 
     def _alive_color(self) -> tuple[int, int, int]:
-        if self.damage <= 12:
+        if self.damage <= 10:
             return (255, 0, 0)
-        if self.damage <= 24:
+        if self.damage <= 20:
             return (255, 99, 0)
-        if self.damage <= 36:
+        if self.damage <= 30:
             return (255, 132, 0)
-        if self.damage <= 48:
+        if self.damage <= 40:
             return (255, 195, 0)
-        if self.damage <= 60:
+        if self.damage <= 50:
             return (191, 201, 0)
         return (60, 200, 60)
 
