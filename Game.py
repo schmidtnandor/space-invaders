@@ -19,7 +19,7 @@ class Game:
     FLEET_SPEED = 0.7
     FLEET_DROP_DISTANCE = 35
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 0  # Milliseconds between shots (0.5 seconds)
+    SHOOT_COOLDOWN = 350  # Milliseconds between shots (0.5 seconds)
 
     def __init__(self) -> None:
 
@@ -132,10 +132,7 @@ class Game:
         if self.current_wave < self.max_waves:
             self.current_wave += 1
             self._prepare_wave()
-            if self.current_wave == 3:
-                self._create_boss()
-            else:
-                self._create_initial_aliens()
+            self._create_initial_aliens()
             print(f"Starting wave {self.current_wave}/{self.max_waves}")
         else:
             self._trigger_game_over("All waves defeated")
@@ -274,9 +271,12 @@ class Game:
             alien.check_screen_boundaries()
             alien.check_collision_with_aliens(self.aliens)
 
-        # End game if any alien reaches the blocks
-        if pygame.sprite.groupcollide(self.aliens, self.blocks, False, False):
-            self._trigger_game_over("Aliens reached the blocks")
+        # End game if any alien reaches 700px from the top
+        # (instead of colliding with the blocks)
+        for alien in self.aliens:
+            if alien.rect.top >= 700:
+                self._trigger_game_over("Aliens reached the danger zone")
+                break
 
         # Update boss on wave 3
         if self.boss:

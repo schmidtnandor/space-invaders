@@ -56,6 +56,10 @@ class Player(pygame.sprite.Sprite):
         """Reduce health when hit by an alien bullet."""
         self.health = max(0, self.health - amount)
 
+    def heal(self, amount: int = 10) -> None:
+        """Restore player health (capped by max health)."""
+        self.health = min(20, self.health + amount)
+
     def get_health_color(self) -> tuple[int, int, int]:
         """Get the health bar color based on current health percentage."""
         health_percent = (self.health / 20) * 100
