@@ -1,4 +1,5 @@
 """Player ship and fire control."""
+
 # pylint: disable=too-many-instance-attributes,no-member
 
 import pygame
@@ -36,11 +37,12 @@ class Player(pygame.sprite.Sprite):
         """Update player position based on keyboard input."""
         keys = pygame.key.get_pressed()
         moved = False
-        if keys[pygame.K_LEFT] and self.rect.left > 25:
+        if keys[pygame.K_LEFT] or keys[pygame.K_a] and self.rect.left > 25:
             self.rect.x -= self.speed
             moved = True
         if (
             keys[pygame.K_RIGHT]
+            or keys[pygame.K_d]
             and self.rect.right < self.screen_width - 25
         ):
             self.rect.x += self.speed
