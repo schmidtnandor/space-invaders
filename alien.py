@@ -59,6 +59,11 @@ class Alien(Sprite):
         self.alien_shoot_damage: int = 1
         self.alien_hp: int = 1
 
+        # Entry animation / invulnerability state
+        self.entry_animating: bool = False
+        self.entry_target_y: float = float(y)
+        self.invulnerable: bool = False
+
         # Pozíció beállítása
         self.rect.x = x
         self.rect.y = y
