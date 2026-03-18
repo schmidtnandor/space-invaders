@@ -24,3 +24,6 @@ class Menu:
         """Launch the main game loop when Play is selected."""
         game = Game()
         game.run()
+
+        # After game over, restore menu window size and state.
+        pygame.display.set_mode((1200, 800))
