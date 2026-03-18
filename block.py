@@ -1,3 +1,6 @@
+"""Block cover used for player protection."""
+# pylint: disable=no-member,too-few-public-methods
+
 import pygame
 
 
@@ -26,6 +29,7 @@ class Block(pygame.sprite.Sprite):
         self._update_image()
 
     def _alive_color(self) -> tuple[int, int, int]:
+        """Choose the block tint based on current damage level."""
         if self.damage <= 12:
             return (255, 0, 0)
         if self.damage <= 24:
@@ -53,6 +57,7 @@ class Block(pygame.sprite.Sprite):
                 pygame.draw.rect(self.image, color, cell_rect)
 
     def take_damage_at(self, x: int, y: int) -> bool:
+        """Mark the block grid cell as damaged by an incoming projectile."""
         local_x = x - self.rect.left
         local_y = y - self.rect.top
         if local_x < 0 or local_y < 0 or local_x >= self.WIDTH or local_y >= self.HEIGHT:
@@ -68,9 +73,7 @@ class Block(pygame.sprite.Sprite):
             return False
 
         self.cells[row][col] = False
-        self.damage -= 1
-        if self.damage < 0:
-            self.damage = 0
+        self.damage = max(0, self.damage - 1)
 
         cell_rect = pygame.Rect(
             col * self.CELL_SIZE,

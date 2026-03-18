@@ -1,9 +1,11 @@
-from Game import Game
+"""Entry point for Space Invaders game."""
+
 from menu import Menu
 
 
 def main() -> None:
-    menu = Menu()
+    """Start the menu to begin the game."""
+    Menu()
 
 
 if __name__ == "__main__":

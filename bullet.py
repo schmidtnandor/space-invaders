@@ -1,3 +1,6 @@
+"""Player bullet sprite implementation."""
+# pylint: disable=no-member,too-few-public-methods
+
 import pygame
 
 
@@ -18,7 +21,7 @@ class Bullet(pygame.sprite.Sprite):
         self.speed = speed
 
     def update(self) -> None:
-        # move the bullet upward and kill it when it leaves the screen
+        """Move the player bullet upward and destroy it off-screen."""
         self.rect.y -= self.speed
         if self.rect.bottom < 0:
             self.kill()

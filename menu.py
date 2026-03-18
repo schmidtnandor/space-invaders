@@ -1,3 +1,6 @@
+"""Game menu entry point."""
+# pylint: disable=invalid-name,no-member,too-few-public-methods
+
 import pygame
 import pygame_menu
 
@@ -5,6 +8,7 @@ from Game import Game
 
 
 class Menu:
+    """Presents main menu and launches Game."""
     def __init__(self):
         pygame.init()
         pygame.display.set_mode((1200, 800))
@@ -17,5 +21,6 @@ class Menu:
         menu.mainloop(menu_surface)
 
     def start_game(self):
+        """Launch the main game loop when Play is selected."""
         game = Game()
         game.run()

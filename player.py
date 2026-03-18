@@ -1,10 +1,16 @@
+"""Player ship and fire control."""
+# pylint: disable=too-many-instance-attributes,no-member
+
 import pygame
 from bullet import Bullet  # imported here to allow precise typing
 
 
 class Player(pygame.sprite.Sprite):
+    """The player's spaceship and input-handling logic."""
+
     def __init__(self, screen_width: int, screen_height: int):
         super().__init__()
+        self.health = 3
         self.screen_width = screen_width
         self.screen_height = screen_height
 
@@ -22,15 +28,21 @@ class Player(pygame.sprite.Sprite):
 
         # group that holds bullets this player has fired
         # `Group` typing is imperfect in pygame stubs; ignore the assignment error
-        self.bullets: pygame.sprite.Group[Bullet] = pygame.sprite.Group()  # type: ignore[assignment]
+        self.bullets: pygame.sprite.Group[Bullet] = (
+            pygame.sprite.Group()  # type: ignore[assignment]
+        )
 
     def check_input(self):
+        """Update player position based on keyboard input."""
         keys = pygame.key.get_pressed()
         moved = False
         if keys[pygame.K_LEFT] and self.rect.left > 25:
             self.rect.x -= self.speed
             moved = True
-        if keys[pygame.K_RIGHT] and self.rect.right < self.screen_width - 25:
+        if (
+            keys[pygame.K_RIGHT]
+            and self.rect.right < self.screen_width - 25
+        ):
             self.rect.x += self.speed
             moved = True
 
@@ -38,15 +50,12 @@ class Player(pygame.sprite.Sprite):
         if moved:
             self.hitbox.center = self.rect.center
 
+    def take_damage(self, amount: int = 1) -> None:
+        """Reduce health when hit by an alien bullet."""
+        self.health = max(0, self.health - amount)
+
     def shoot(self):
-        """Create a bullet travelling upwards from the player's gun.
-
-        The player itself doesn't know anything about the game screen; it
-        simply returns a new :class:`Bullet` instance.  The caller is
-        responsible for adding it to a group and drawing/updating it.
-        """
-        from bullet import Bullet
-
+        """Create a bullet travelling upwards from the player's gun."""
         bullet = Bullet(self.rect.centerx, self.rect.top + 50)
         self.bullets.add(bullet)
         return bullet
