@@ -18,7 +18,7 @@ class Game:
     FLEET_SPEED = 0.7
     FLEET_DROP_DISTANCE = 35
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 350  # Milliseconds between shots (0.5 seconds)
+    SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
 
     def __init__(self) -> None:
 
@@ -116,6 +116,7 @@ class Game:
             self.current_wave += 1
             self._prepare_wave()
             self._create_initial_aliens()
+            self.player.heal(10)
             print(f"Starting wave {self.current_wave}/{self.max_waves}")
         else:
             self._trigger_game_over("All waves defeated")
@@ -254,10 +255,10 @@ class Game:
             alien.check_screen_boundaries()
             alien.check_collision_with_aliens(self.aliens)
 
-        # End game if any alien reaches 800px from the top
+        # End game if any alien reaches 700px from the top
         # (instead of colliding with the blocks)
         for alien in self.aliens:
-            if alien.rect.top >= 800:
+            if alien.rect.top >= 700:
                 self._trigger_game_over("Aliens reached the danger zone")
                 break
 
