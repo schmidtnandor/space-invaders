@@ -16,8 +16,9 @@ class Game:
     ALIEN_ROWS = 4  # Number of rows of aliens
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
     FLEET_SPEED = 0.7
-    FLEET_DROP_DISTANCE = 50
+    FLEET_DROP_DISTANCE = 35
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
+    SHOOT_COOLDOWN = 350  # Milliseconds between shots (0.5 seconds)
 
     def __init__(self) -> None:
 
@@ -52,6 +53,9 @@ class Game:
         # Game over state (stops the loop and allows a final draw)
         self.game_over = False
         self.game_over_message = ""
+
+        # Shoot cooldown tracking
+        self.last_shot_time = 0
 
     def _create_initial_aliens(self) -> None:
         """Create five full rows of aliens at game start."""
@@ -102,7 +106,10 @@ class Game:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.player.shoot()
+                    current_time = pygame.time.get_ticks()
+                    if current_time - self.last_shot_time >= self.SHOOT_COOLDOWN:
+                        self.player.shoot()
+                        self.last_shot_time = current_time
 
     def _update_global_fleet_state(self) -> None:
         """Update global fleet state when ANY alien hits a boundary.
