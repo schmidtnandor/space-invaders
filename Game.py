@@ -16,8 +16,8 @@ class Game:
     ALIEN_ROWS = 4  # Number of rows of aliens
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
     FLEET_SPEED = 0.7
-    FLEET_DROP_DISTANCE = 10.0
-    FLEET_DROP_SPEED = 2.5  # Pixels per frame while dropping
+    FLEET_DROP_DISTANCE = 50
+    FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
 
     def __init__(self) -> None:
 
@@ -49,7 +49,9 @@ class Game:
         # Create initial rows of aliens
         self._create_initial_aliens()
 
-        self.run()
+        # Game over state (stops the loop and allows a final draw)
+        self.game_over = False
+        self.game_over_message = ""
 
     def _create_initial_aliens(self) -> None:
         """Create five full rows of aliens at game start."""
@@ -89,7 +91,9 @@ class Game:
             self.draw()
             self.clock.tick(60)
 
-        pygame.quit()
+        # Do not quit pygame here: return to menu for replay or exit.
+        # pygame.quit() is managed by the menu/app level.
+
 
     def handle_events(self) -> None:
         """Process input events."""
@@ -158,6 +162,14 @@ class Game:
             x = start_x + i * (Block.WIDTH + spacing)
             self.blocks.add(Block(x, start_y))
 
+    def _trigger_game_over(self, message: str) -> None:
+        """End the game and set the game-over message."""
+        if not self.game_over:
+            self.game_over = True
+            self.game_over_message = message
+            print("Game Over:", message)
+            self.running = False
+
     def update(self) -> None:
         """Update all game objects and collisions."""
         self.player.check_input()
@@ -176,6 +188,10 @@ class Game:
             alien.update_cooldown()  # Handle shooting
             alien.check_screen_boundaries()
             alien.check_collision_with_aliens(self.aliens)
+
+        # End game if any alien reaches the blocks
+        if pygame.sprite.groupcollide(self.aliens, self.blocks, False, False):
+            self._trigger_game_over("Aliens reached the blocks")
 
         # Update alien bullets
         self.alien_bullets.update()
@@ -216,6 +232,33 @@ class Game:
                 if self.player.health <= 0:
                     self.running = False
 
+    def _draw_health_bar(self) -> None:
+        """Draw the player's health bar at the top of the screen."""
+        bar_width = 200
+        bar_height = 20
+        bar_x = 20
+        bar_y = 20
+
+        # Draw background (dark)
+        pygame.draw.rect(self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+
+        # Draw health fill
+        health_fill_width = (self.player.health / 20) * bar_width
+        health_color = self.player.get_health_color()
+        pygame.draw.rect(
+            self.screen, health_color, (bar_x, bar_y, health_fill_width, bar_height)
+        )
+
+        # Draw border
+        pygame.draw.rect(self.screen, (200, 200, 200), (bar_x, bar_y, bar_width, bar_height), 2)
+
+        # Draw health text
+        font = pygame.font.Font(None, 24)
+        health_text = font.render(
+            f"Health: {self.player.health}/20", True, (200, 200, 200)
+        )
+        self.screen.blit(health_text, (bar_x + bar_width + 15, bar_y + 2))
+
     def draw(self) -> None:
         """Draw all renderable elements to the screen."""
         self.screen.fill((30, 30, 30))  # Background color
@@ -236,4 +279,21 @@ class Game:
         # Draw player bullets
         self.player.bullets.draw(self.screen)
 
+        # Draw health bar
+        self._draw_health_bar()
+
         pygame.display.flip()
+
+        if self.game_over:
+            font = pygame.font.SysFont(None, 72)
+            text_surface = font.render("GAME OVER", True, (255, 0, 0))
+            text_rect = text_surface.get_rect(center=(self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT // 2))
+            self.screen.blit(text_surface, text_rect)
+
+            subfont = pygame.font.SysFont(None, 36)
+            subtext_surface = subfont.render("Returning to main menu...", True, (255, 255, 255))
+            subtext_rect = subtext_surface.get_rect(center=(self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT // 2 + 60))
+            self.screen.blit(subtext_surface, subtext_rect)
+
+            pygame.display.flip()
+            pygame.time.delay(1800)

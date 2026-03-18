@@ -30,3 +30,6 @@ class Menu:
     def start_game(self):
         game = Game()
         game.run()
+
+        # After game over, restore menu window size and state.
+        pygame.display.set_mode((1200, 800))
