@@ -247,9 +247,12 @@ class Game:
             alien.check_screen_boundaries()
             alien.check_collision_with_aliens(self.aliens)
 
-        # End game if any alien reaches the blocks
-        if pygame.sprite.groupcollide(self.aliens, self.blocks, False, False):
-            self._trigger_game_over("Aliens reached the blocks")
+        # End game if any alien reaches 800px from the top
+        # (instead of colliding with the blocks)
+        for alien in self.aliens:
+            if alien.rect.top >= 800:
+                self._trigger_game_over("Aliens reached the danger zone")
+                break
 
         # Update alien bullets
         self.alien_bullets.update()
