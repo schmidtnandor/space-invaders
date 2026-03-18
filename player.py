@@ -10,7 +10,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, screen_width: int, screen_height: int):
         super().__init__()
-        self.health = 3
+        self.health = 20
         self.screen_width = screen_width
         self.screen_height = screen_height
 
@@ -53,6 +53,21 @@ class Player(pygame.sprite.Sprite):
     def take_damage(self, amount: int = 1) -> None:
         """Reduce health when hit by an alien bullet."""
         self.health = max(0, self.health - amount)
+
+    def get_health_color(self) -> tuple[int, int, int]:
+        """Get the health bar color based on current health percentage."""
+        health_percent = (self.health / 20) * 100
+        if health_percent <= 10:
+            return (255, 0, 0)  # Red
+        if health_percent <= 20:
+            return (255, 99, 0)  # Orange-red
+        if health_percent <= 30:
+            return (255, 132, 0)  # Orange
+        if health_percent <= 40:
+            return (255, 195, 0)  # Yellow
+        if health_percent <= 50:
+            return (191, 201, 0)  # Yellow-green
+        return (60, 200, 60)  # Green
 
     def shoot(self):
         """Create a bullet travelling upwards from the player's gun."""
