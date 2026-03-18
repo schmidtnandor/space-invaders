@@ -5,6 +5,7 @@ import pygame
 from player import Player
 from alien import Alien
 from block import Block
+from boss import Boss, BossMinion
 
 
 class Game:
@@ -18,7 +19,7 @@ class Game:
     FLEET_SPEED = 0.7
     FLEET_DROP_DISTANCE = 35
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 350  # Milliseconds between shots (0.5 seconds)
+    SHOOT_COOLDOWN = 0  # Milliseconds between shots (0.5 seconds)
 
     def __init__(self) -> None:
 
@@ -40,6 +41,9 @@ class Game:
         self.aliens = pygame.sprite.Group()
         self.alien_bullets = pygame.sprite.Group()  # Alien projectiles (max 3)
 
+        # Boss minions for wave 3
+        self.boss_minions = pygame.sprite.Group()
+
         # Global fleet state (synchronized across all aliens when boundary is hit)
         self.fleet_moving_right = True
         self.fleet_is_dropping = False
@@ -47,9 +51,15 @@ class Game:
         self.fleet_edge_cooldown = 0
         self.fleet_speed = self.FLEET_SPEED
 
-        # Wave management: start on wave 1 and allow exactly 2 waves total
+        # Wave management: start on wave 1 and allow exactly 3 waves total
         self.current_wave = 1
-        self.max_waves = 2
+        self.max_waves = 3
+
+        # Boss state (only used on wave or boss for wave 3
+        if self.current_wave == 3:
+            self._create_boss()
+        else:
+            self.boss = None
 
         # Create initial rows of aliens
         self._create_initial_aliens()
@@ -60,6 +70,11 @@ class Game:
 
         # Shoot cooldown tracking
         self.last_shot_time = 0
+
+    def _create_boss(self) -> None:
+        """Create the boss for wave 3."""
+        self.boss = Boss(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.boss.set_alien_bullets_group(self.alien_bullets)
 
     def _create_initial_aliens(self) -> None:
         """Create five full rows of aliens at game start."""
@@ -104,6 +119,8 @@ class Game:
         """Prepare state for the next wave of aliens."""
         self.aliens.empty()
         self.alien_bullets.empty()
+        self.boss_minions.empty()
+        self.boss = None
         self.fleet_moving_right = True
         self.fleet_is_dropping = False
         self.fleet_drop_progress = 0.0
@@ -115,7 +132,10 @@ class Game:
         if self.current_wave < self.max_waves:
             self.current_wave += 1
             self._prepare_wave()
-            self._create_initial_aliens()
+            if self.current_wave == 3:
+                self._create_boss()
+            else:
+                self._create_initial_aliens()
             print(f"Starting wave {self.current_wave}/{self.max_waves}")
         else:
             self._trigger_game_over("All waves defeated")
@@ -258,6 +278,16 @@ class Game:
         if pygame.sprite.groupcollide(self.aliens, self.blocks, False, False):
             self._trigger_game_over("Aliens reached the blocks")
 
+        # Update boss on wave 3
+        if self.boss:
+            self.boss.update_movement()
+            self.boss.update_cooldown()
+
+        # Update boss minions
+        for minion in self.boss_minions:
+            minion.update_movement()
+            minion.update_cooldown()
+
         # Update alien bullets
         self.alien_bullets.update()
 
@@ -274,12 +304,33 @@ class Game:
                 bullet.kill()
                 continue
 
+            # Check collision with boss first (wave 3)
+            if self.boss and bullet.rect.colliderect(self.boss.rect):
+                boss_alive, minions = self.boss.take_damage(1)
+                if minions:
+                    for minion in minions:
+                        self.boss_minions.add(minion)
+                if not boss_alive:
+                    self.boss = None  # Boss defeated
+                bullet.kill()
+                continue
+
             hit_aliens = pygame.sprite.spritecollide(bullet, self.aliens, False)
             vulnerable_aliens = [alien for alien in hit_aliens if not alien.invulnerable]
             if vulnerable_aliens:
                 for alien in vulnerable_aliens:
                     alien.kill()
                 bullet.kill()
+                continue
+
+            # Check collision with boss minions
+            hit_minions = pygame.sprite.spritecollide(bullet, self.boss_minions, False)
+            if hit_minions:
+                for minion in hit_minions:
+                    if not minion.take_damage(1):
+                        minion.kill()
+                bullet.kill()
+                continue
 
         # Alien bullets should also collide with blocks and damage 9x9 cells.
         for bullet in list(self.alien_bullets):
@@ -300,9 +351,17 @@ class Game:
                 if self.player.health <= 0:
                     self.running = False
 
-        # If all aliens are dead, spawn the next wave or end the game (two waves max).
-        if not self.aliens and not self.game_over:
-            self._start_next_wave()
+        # If all aliens are dead, spawn the next wave or end the game.
+        # For wave 3 (boss), check if boss is defeated instead.
+        if not self.game_over:
+            if self.boss and self.boss.boss_health <= 0:
+                self._start_next_wave()
+            elif not self.boss and not self.aliens and self.current_wave < 3:
+                self._start_next_wave()
+
+        # Check if any minions reached the player
+        if pygame.sprite.spritecollide(self.player, self.boss_minions, False):
+            self.player.take_damage(1)
 
     def _draw_health_bar(self) -> None:
         """Draw the player's health bar at the top of the screen."""
@@ -331,6 +390,48 @@ class Game:
         )
         self.screen.blit(health_text, (bar_x + bar_width + 15, bar_y + 2))
 
+    def _draw_boss_health_bar(self) -> None:
+        """Draw the boss's health bar at the top right of the screen."""
+        if not self.boss:
+            return
+
+        bar_width = 300
+        bar_height = 30
+        bar_x = self.SCREEN_WIDTH - bar_width - 20
+        bar_y = 20
+
+        # Draw background (dark)
+        pygame.draw.rect(self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+
+        # Draw health fill (yellow to red gradient based on health)
+        health_fill_width = (self.boss.boss_health / self.boss.max_health) * bar_width
+        health_percent = self.boss.get_health_percent()
+
+        if health_percent <= 20:
+            health_color = (255, 0, 0)  # Red
+        elif health_percent <= 40:
+            health_color = (255, 100, 0)  # Orange
+        elif health_percent <= 60:
+            health_color = (255, 200, 0)  # Yellow
+        else:
+            health_color = (100, 255, 100)  # Green
+
+        pygame.draw.rect(
+            self.screen, health_color, (bar_x, bar_y, health_fill_width, bar_height)
+        )
+
+        # Draw border
+        pygame.draw.rect(self.screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height), 2)
+
+        # Draw health text
+        font = pygame.font.Font(None, 24)
+        health_text = font.render(
+            f"Boss: {self.boss.boss_health}/{self.boss.max_health}",
+            True,
+            (255, 255, 255),
+        )
+        self.screen.blit(health_text, (bar_x + 10, bar_y + 5))
+
     def draw(self) -> None:
         """Draw all renderable elements to the screen."""
         self.screen.fill((30, 30, 30))  # Background color
@@ -345,6 +446,14 @@ class Game:
         for alien in self.aliens:
             alien.blitme(self.screen)
 
+        # Draw boss on wave 3
+        if self.boss:
+            self.boss.blitme(self.screen)
+
+        # Draw boss minions
+        for minion in self.boss_minions:
+            minion.blitme(self.screen)
+
         # Draw alien bullets
         self.alien_bullets.draw(self.screen)
 
@@ -353,6 +462,9 @@ class Game:
 
         # Draw health bar
         self._draw_health_bar()
+
+        # Draw boss health bar if boss exists
+        self._draw_boss_health_bar()
 
         # Draw current wave indicator
         wave_font = pygame.font.Font(None, 24)

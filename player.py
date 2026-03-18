@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, screen_width: int, screen_height: int):
         super().__init__()
-        self.health = 20
+        self.health = 2000
         self.screen_width = screen_width
         self.screen_height = screen_height
 
