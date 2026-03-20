@@ -18,8 +18,8 @@ class Game:
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
     FLEET_SPEED = 0.7
     FLEET_DROP_DISTANCE = 35
-    FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 350  # Milliseconds between shots (0.5 seconds)
+    FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping6
+    SHOOT_COOLDOWN = 0  # Milliseconds between shots (0.5 seconds)
 
     def __init__(self) -> None:
 
@@ -55,14 +55,13 @@ class Game:
         self.current_wave = 1
         self.max_waves = 3
 
-        # Boss state (only used on wave or boss for wave 3
+        # Boss state (only used for wave 3)
         if self.current_wave == 3:
             self._create_boss()
         else:
             self.boss = None
-
-        # Create initial rows of aliens
-        self._create_initial_aliens()
+            # Create initial rows of aliens (not needed for wave 3 boss fight)
+            self._create_initial_aliens()
 
         # Game over state (stops the loop and allows a final draw)
         self.game_over = False
@@ -132,7 +131,13 @@ class Game:
         if self.current_wave < self.max_waves:
             self.current_wave += 1
             self._prepare_wave()
-            self._create_initial_aliens()
+            
+            # Wave 3 is the boss fight
+            if self.current_wave == 3:
+                self._create_boss()
+            else:
+                self._create_initial_aliens()
+            
             print(f"Starting wave {self.current_wave}/{self.max_waves}")
         else:
             self._trigger_game_over("All waves defeated")
@@ -160,6 +165,13 @@ class Game:
                     if current_time - self.last_shot_time >= self.SHOOT_COOLDOWN:
                         self.player.shoot()
                         self.last_shot_time = current_time
+                elif event.key == pygame.K_k:
+                    # Kill switch: destroy all enemies in current wave
+                    self.aliens.empty()
+                    if self.boss:
+                        self.boss.kill()
+                        self.boss = None
+                    self.boss_minions.empty()
 
     def _update_wave_entry(self) -> bool:
         """Animate wave entry for new wave allies, return True if any still animating."""
@@ -354,7 +366,7 @@ class Game:
         # If all aliens are dead, spawn the next wave or end the game.
         # For wave 3 (boss), check if boss is defeated instead.
         if not self.game_over:
-            if self.boss and self.boss.boss_health <= 0:
+            if self.current_wave == 3 and not self.boss:
                 self._start_next_wave()
             elif not self.boss and not self.aliens and self.current_wave < 3:
                 self._start_next_wave()
