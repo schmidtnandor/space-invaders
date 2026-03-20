@@ -20,7 +20,7 @@ class Game:
     FLEET_DROP_DISTANCE = 35
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
     SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
->>>>>>> 9aad01fbb225101964a2c9fc7d4f9f1cb8d49c03
+
 
     def __init__(self) -> None:
 

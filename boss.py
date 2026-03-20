@@ -154,6 +154,11 @@ class Boss(Sprite):
 
     def update_movement(self):
         """Update boss horizontal movement with screen boundary bouncing."""
+        # Randomly reverse direction occasionally to make boss movement less predictable.
+        # Use a low chance so movement remains mostly smooth.
+        if random.random() < 0.01:  # 1% chance per frame
+            self.moving_right = not self.moving_right
+
         if self.moving_right:
             self.x += self.boss_speed
         else:
