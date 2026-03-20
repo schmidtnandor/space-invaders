@@ -11,15 +11,20 @@ from boss import Boss, BossMinion
 class Game:
     """Game engine state and logic."""
     SCREEN_WIDTH = 1200
-    SCREEN_HEIGHT = 1000
+    SCREEN_HEIGHT = 800
 
     # Alien configuration
-    ALIEN_ROWS = 4  # Number of rows of aliens
+    ALIEN_ROWS = 3  # Number of rows of aliens
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
     FLEET_SPEED = 0.7
     FLEET_DROP_DISTANCE = 35
+<<<<<<< HEAD
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping6
     SHOOT_COOLDOWN = 0  # Milliseconds between shots (0.5 seconds)
+=======
+    FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
+    SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
+>>>>>>> 9aad01fbb225101964a2c9fc7d4f9f1cb8d49c03
 
     def __init__(self) -> None:
 
@@ -286,7 +291,7 @@ class Game:
         # End game if any alien reaches 700px from the top
         # (instead of colliding with the blocks)
         for alien in self.aliens:
-            if alien.rect.top >= 700:
+            if alien.rect.top >= 500:
                 self._trigger_game_over("Aliens reached the danger zone")
                 break
 
@@ -446,7 +451,7 @@ class Game:
 
     def draw(self) -> None:
         """Draw all renderable elements to the screen."""
-        self.screen.fill((30, 30, 30))  # Background color
+        self.screen.fill((0, 0, 0))  # Background color set to black
 
         # Draw blocks
         self.blocks.draw(self.screen)
