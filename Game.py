@@ -17,13 +17,9 @@ class Game:
     ALIEN_ROWS = 3  # Number of rows of aliens
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
     FLEET_SPEED = 0.7
-    FLEET_DROP_DISTANCE = 35
-    FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
-<<<<<<< HEAD
-=======
-
->>>>>>> 2ea2904cbc15c5a65666f930d10c61f6869c2ab7
+    FLEET_DROP_DISTANCE = 23
+    FLEET_DROP_SPEED = 1.0  # Pixels per frame while dropping
+    SHOOT_COOLDOWN = 170  # Milliseconds between shots (0.5 seconds)
 
     def __init__(self) -> None:
 
@@ -241,8 +237,8 @@ class Game:
     def _create_blocks(self) -> None:
         """Create protective blocks in front of the player."""
         # Create four larger blocks with more spacing, placed closer to the player.
-        block_count = 4
-        spacing = 150
+        block_count = 6
+        spacing = 175
         total_width = block_count * Block.WIDTH + (block_count - 1) * spacing
         start_x = (self.SCREEN_WIDTH - total_width) // 2
         # Place blocks very close to the player (player bullets still stop at the blocks).

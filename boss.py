@@ -33,7 +33,7 @@ class BossMinion(Sprite):
         # Settings
         self.minion_speed = 1.5
         self.shoot_cooldown = 0
-        self.minion_health = 5  # Minions have less health
+        self.minion_health = 3  # Minions have less health
 
         # Position at y=300
         if spawn_x is None:
