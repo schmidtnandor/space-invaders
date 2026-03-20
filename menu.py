@@ -11,7 +11,7 @@ from Game import Game
 class Menu:
     def __init__(self):
         pygame.init()
-        pygame.display.set_mode((1200, 800))
+        pygame.display.set_mode((1920, 1080))
         menu_surface = pygame.display.get_surface()
 
         custom_theme = pygame_menu.Theme(
@@ -32,4 +32,4 @@ class Menu:
         game.run()
 
         # After game over, restore menu window size and state.
-        pygame.display.set_mode((1200, 800))
+        pygame.display.set_mode((1920, 1080))

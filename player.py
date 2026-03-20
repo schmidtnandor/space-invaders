@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
 
         # Kép betöltése és optimalizálása
         self.image = pygame.image.load("grafika/player.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (120, 120))
+        self.image = pygame.transform.scale(self.image, (100, 100))
         self.rect = self.image.get_rect()
 
         # Kezdőpozíció: lent, középen

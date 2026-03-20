@@ -10,14 +10,14 @@ from boss import Boss, BossMinion
 
 class Game:
     """Game engine state and logic."""
-    SCREEN_WIDTH = 1200
-    SCREEN_HEIGHT = 800
+    SCREEN_WIDTH = 1920
+    SCREEN_HEIGHT = 1080
 
     # Alien configuration
     ALIEN_ROWS = 3  # Number of rows of aliens
     ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
     FLEET_SPEED = 0.7
-    FLEET_DROP_DISTANCE = 35
+    FLEET_DROP_DISTANCE = 10000
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
     SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
 
@@ -55,7 +55,7 @@ class Game:
         self.current_wave = 1
         self.max_waves = 3
 
-        # Boss state (only used on wave or boss for wave 3
+        # Boss state (only used on wave 3)
         if self.current_wave == 3:
             self._create_boss()
         else:
@@ -274,7 +274,7 @@ class Game:
         # End game if any alien reaches 700px from the top
         # (instead of colliding with the blocks)
         for alien in self.aliens:
-            if alien.rect.top >= 500:
+            if alien.rect.top >= 800:
                 self._trigger_game_over("Aliens reached the danger zone")
                 break
 
