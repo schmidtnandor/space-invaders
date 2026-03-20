@@ -25,6 +25,10 @@ class BossMinion(Sprite):
         # Load and scale minion image (smaller version of boss)
         self.image = pygame.image.load("grafika/boss.png")
         self.image = pygame.transform.scale(self.image, (80, 80))  # 80x80 px
+        
+        # Tint minion image blue
+        self.image.fill((0,152,255), special_flags=pygame.BLEND_RGBA_MULT)
+        
         self.rect = self.image.get_rect()
 
         # Settings
