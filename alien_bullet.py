@@ -10,7 +10,7 @@ class AlienBullet(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, speed: int = 8) -> None:
         super().__init__()
         # Simple red rectangle for alien bullets
-        self.image = pygame.Surface((7, 20))
+        self.image = pygame.Surface((7, 27))
         self.image.fill((255, 100, 100))  # Red color
         self.rect = self.image.get_rect(midtop=(x, y))
         self.speed = speed
@@ -18,5 +18,5 @@ class AlienBullet(pygame.sprite.Sprite):
     def update(self) -> None:
         """Move the bullet downward and remove it after leaving the screen."""
         self.rect.y += self.speed
-        if self.rect.top > 1000:  # Screen height
+        if self.rect.top > 1200:  # Screen height
             self.kill()

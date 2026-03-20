@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, screen_width: int, screen_height: int):
         super().__init__()
-        self.health = 2000
+        self.health = 20
         self.screen_width = screen_width
         self.screen_height = screen_height
 
@@ -25,7 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 15
 
         # hitbox used for collision checks (smaller than the visible sprite)
-        self.hitbox = self.rect.inflate(-10, -70)
+        self.hitbox = self.rect.inflate(-10, -90)
 
         # group that holds bullets this player has fired
         # `Group` typing is imperfect in pygame stubs; ignore the assignment error

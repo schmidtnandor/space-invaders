@@ -20,10 +20,7 @@ class Game:
     FLEET_DROP_DISTANCE = 35
     FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
     SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
-<<<<<<< HEAD
-=======
 
->>>>>>> 2ea2904cbc15c5a65666f930d10c61f6869c2ab7
 
     def __init__(self) -> None:
 
@@ -133,6 +130,9 @@ class Game:
     def _start_next_wave(self) -> None:
         """Start the next wave if within allowed limits, otherwise win."""
         if self.current_wave < self.max_waves:
+            # Heal player by 10 HP at wave transition (capped by heal() max).
+            self.player.heal(10)
+
             self.current_wave += 1
             self._prepare_wave()
             
@@ -457,6 +457,9 @@ class Game:
 
         # Draw player
         self.screen.blit(self.player.image, self.player.rect)
+
+        # Draw player hitbox for debugging
+        #pygame.draw.rect(self.screen, (0, 255, 0), self.player.hitbox, 2)
 
         # Draw aliens
         for alien in self.aliens:
