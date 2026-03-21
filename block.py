@@ -3,6 +3,7 @@
 # pylint: disable=no-member,too-few-public-methods
 
 import pygame
+from config import Config
 
 
 class Block(pygame.sprite.Sprite):
@@ -11,93 +12,103 @@ class Block(pygame.sprite.Sprite):
     Each block is divided into 9x9 cells. Bullets destroy one cell at a time.
     """
 
-    WIDTH: int = 108
-    HEIGHT: int = 45
-    CELL_SIZE: int = 9
-    DEAD_COLOR: tuple[int, int, int] = (0, 0, 0)
+    config: Config = Config()
+    _width: int
+    _height: int
+    _cell_size: int
+    _dead_color: tuple[int, int, int]
+
+    _image: pygame.Surface
+    _rect: pygame.Rect
+    _cols: int
+    _rows: int
+    _cells: list[list[bool]]
+    _damage: int
 
     def __init__(self, x: int, y: int) -> None:
         super().__init__()
-        self.image: pygame.Surface = pygame.Surface(
-            (self.WIDTH, self.HEIGHT), pygame.SRCALPHA
-        )
-        self.rect: pygame.Rect = self.image.get_rect(topleft=(x, y))
+        self._width = self.config.block_width
+        self._height = self.config.block_height
 
-        self.cols: int = (self.WIDTH + self.CELL_SIZE - 1) // self.CELL_SIZE
-        self.rows: int = (self.HEIGHT + self.CELL_SIZE - 1) // self.CELL_SIZE
-        self.cells: list[list[bool]] = [
-            [True for _ in range(self.cols)] for _ in range(self.rows)
-        ]
+        self._image = pygame.Surface((self._width, self._height), pygame.SRCALPHA)
+        self._rect = self._image.get_rect(topleft=(x, y))
+
+        self._cell_size = self.config.block_cell_size
+        self._dead_color = self.config.block_dead_color
+
+        self._cols = (self._width + self._cell_size - 1) // self._cell_size
+        self._rows = (self._height + self._cell_size - 1) // self._cell_size
+        self._cells = [[True for _ in range(self._cols)] for _ in range(self._rows)]
 
         # Track remaining grid hits (starting at 72 as requested).
-        self.damage: int = 60
+        self._damage = 60
         self._update_image()
 
     def _alive_color(self) -> tuple[int, int, int]:
-        if self.damage <= 12:
+        if self._damage <= 12:
             return (255, 0, 0)
-        if self.damage <= 20:
+        if self._damage <= 20:
             return (255, 99, 0)
-        if self.damage <= 30:
+        if self._damage <= 30:
             return (255, 132, 0)
-        if self.damage <= 40:
+        if self._damage <= 40:
             return (255, 195, 0)
-        if self.damage <= 50:
+        if self._damage <= 50:
             return (191, 201, 0)
         return (60, 200, 60)
 
     def _update_image(self) -> None:
         alive_color: tuple[int, int, int] = self._alive_color()
-        self.image.fill((0, 0, 0, 0))
-        for row in range(self.rows):
-            for col in range(self.cols):
+        self._image.fill((0, 0, 0, 0))
+        for row in range(self._rows):
+            for col in range(self._cols):
                 color: tuple[int, int, int] = (
-                    alive_color if self.cells[row][col] else self.DEAD_COLOR
+                    alive_color if self._cells[row][col] else self._dead_color
                 )
                 cell_rect: pygame.Rect = pygame.Rect(
-                    col * self.CELL_SIZE,
-                    row * self.CELL_SIZE,
-                    self.CELL_SIZE,
-                    self.CELL_SIZE,
+                    col * self._cell_size,
+                    row * self._cell_size,
+                    self._cell_size,
+                    self._cell_size,
                 )
-                pygame.draw.rect(self.image, color, cell_rect)
+                pygame.draw.rect(self._image, color, cell_rect)
 
     def take_damage_at(self, x: int, y: int) -> bool:
         """Mark the block grid cell as damaged by an incoming projectile."""
-        local_x: int = x - self.rect.left
-        local_y: int = y - self.rect.top
+        local_x: int = x - self._rect.left
+        local_y: int = y - self._rect.top
         if (
             local_x < 0
             or local_y < 0
-            or local_x >= self.WIDTH
-            or local_y >= self.HEIGHT
+            or local_x >= self._width
+            or local_y >= self._height
         ):
             return False
 
-        col: int = local_x // self.CELL_SIZE
-        row: int = local_y // self.CELL_SIZE
+        col: int = local_x // self._cell_size
+        row: int = local_y // self._cell_size
 
-        if row < 0 or row >= self.rows or col < 0 or col >= self.cols:
+        if row < 0 or row >= self._rows or col < 0 or col >= self._cols:
             return False
 
-        if not self.cells[row][col]:
+        if not self._cells[row][col]:
             return False
 
-        self.cells[row][col] = False
-        self.damage = max(0, self.damage - 1)
+        self._cells[row][col] = False
+        self._damage = max(0, self._damage - 1)
 
         cell_rect: pygame.Rect = pygame.Rect(
-            col * self.CELL_SIZE,
-            row * self.CELL_SIZE,
-            self.CELL_SIZE,
-            self.CELL_SIZE,
+            col * self._cell_size,
+            row * self._cell_size,
+            self._cell_size,
+            self._cell_size,
         )
-        pygame.draw.rect(self.image, self.DEAD_COLOR, cell_rect)
+        pygame.draw.rect(self._image, self._dead_color, cell_rect)
 
         # Redraw alive cells with updated color after each hit.
         self._update_image()
 
-        if all(not alive for row_cells in self.cells for alive in row_cells):
+        if all(not alive for row_cells in self._cells for alive in row_cells):
             self.kill()
 
         return True
