@@ -3,6 +3,7 @@
 # pylint: disable=no-member,too-few-public-methods
 
 import pygame
+from config import Config
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -13,16 +14,21 @@ class Bullet(pygame.sprite.Sprite):
     can swap in an image or add more behaviour later.
     """
 
-    def __init__(self, x: int, y: int, speed: int = 15) -> None:
+    config: Config = Config()
+    _image: pygame.Surface
+    _rect: pygame.Rect
+    _speed: int
+
+    def __init__(self, x: int, y: int) -> None:
         super().__init__()
         # very simple representation for now
-        self.image: pygame.Surface = pygame.Surface((5, 15))
-        self.image.fill((255, 255, 255))
-        self.rect: pygame.Rect = self.image.get_rect(midbottom=(x, y))
-        self.speed: int = speed
+        self._image: pygame.Surface = pygame.Surface((5, 15))
+        self._image.fill((255, 255, 255))
+        self._rect: pygame.Rect = self._image.get_rect(midbottom=(x, y))
+        self._speed = self.config.bullet_speed
 
     def update(self) -> None:
         """Move the player bullet upward and destroy it off-screen."""
-        self.rect.y -= self.speed
-        if self.rect.bottom < 0:
+        self._rect.y -= self._speed
+        if self._rect.bottom < 0:
             self.kill()
