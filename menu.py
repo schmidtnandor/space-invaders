@@ -15,7 +15,6 @@ class Menu:
     config: Config = Config()
 
     def __init__(self) -> None:
-
         pygame.init()
         pygame.display.set_mode((self.config.screen_width, self.config.screen_height))
         menu_surface: pygame.Surface = pygame.display.get_surface()
@@ -24,14 +23,12 @@ class Menu:
             title_bar_style=MENUBAR_STYLE_NONE,
             widget_font=font.FONT_MUNRO,
         )
-
         menu: Any = pygame_menu.Menu(
             title="",
             width=self.config.screen_width,
             height=self.config.screen_height,
             theme=custom_theme,
         )
-
         menu.add.label("SPACE INVADERS", font_size=100, font_color=(255, 255, 255))
         menu.add.image("grafika/enemy.png", scale=(1.0, 1.0))
         menu.add.button("Play", self.start_game, font_size=50)

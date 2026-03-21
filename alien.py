@@ -38,6 +38,54 @@ class Alien(Sprite):
         """Get the alien's rect for collision checking."""
         return self._rect
 
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def row_index(self) -> int:
+        return self._row_index
+
+    @property
+    def entry_animating(self) -> bool:
+        return self._entry_animating
+
+    @entry_animating.setter
+    def entry_animating(self, value: bool) -> None:
+        self._entry_animating = value
+
+    @property
+    def entry_target_y(self) -> float:
+        return self._entry_target_y
+
+    @entry_target_y.setter
+    def entry_target_y(self, value: float) -> None:
+        self._entry_target_y = value
+
+    @property
+    def invulnerable(self) -> bool:
+        return self._invulnerable
+
+    @invulnerable.setter
+    def invulnerable(self, value: bool) -> None:
+        self._invulnerable = value
+
+    @property
+    def y(self) -> float:
+        return self._y
+
+    @y.setter
+    def y(self, value: float) -> None:
+        self._y = value
+
+    @property
+    def alien_speed(self) -> float:
+        return self._alien_speed
+
+    @alien_speed.setter
+    def alien_speed(self, value: float) -> None:
+        self._alien_speed = value
+
     # Minimum spacing between aliens to prevent overlapping
 
     def __init__(
@@ -72,7 +120,7 @@ class Alien(Sprite):
         # Settings
         self._alien_speed = self.config.alien_speed  # Classic invaders pace
         self._shoot_cooldown = (
-            self.config.shoot_cooldown
+            self.config.alien_shoot_cooldown
         )  # Frames until next shot available
         self._alien_shoot_intensity = self.config.alien_shoot_intensity
         self._alien_shoot_damage = self.config.alien_shoot_damage

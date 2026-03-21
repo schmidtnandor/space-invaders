@@ -27,3 +27,15 @@ class AlienBullet(pygame.sprite.Sprite):
         self._rect.y += self._speed
         if self._rect.top > self.config.screen_height:
             self.kill()
+
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._rect
+
+    @property
+    def speed(self) -> int:
+        return self._speed

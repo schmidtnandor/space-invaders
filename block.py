@@ -112,3 +112,11 @@ class Block(pygame.sprite.Sprite):
             self.kill()
 
         return True
+
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._rect

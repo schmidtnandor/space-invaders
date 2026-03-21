@@ -45,6 +45,7 @@ class BossMinion(Sprite):
         # Settings
         self._minion_speed = config.minion_speed
         self._minion_health = config.minion_health
+        self._shoot_cooldown = 0
 
         # Position at y=300
         if spawn_x is None:
@@ -88,7 +89,7 @@ class BossMinion(Sprite):
             return
 
         if len(self._alien_bullets) < 10:
-            bullet = AlienBullet(self._rect.centerx, self._rect.bottom, speed=5)
+            bullet = AlienBullet(self._rect.centerx, self._rect.bottom)
             self._alien_bullets.add(bullet)
 
     def update_cooldown(self) -> None:
@@ -115,6 +116,14 @@ class BossMinion(Sprite):
     def blitme(self, surface: pygame.Surface) -> None:
         """Draw the minion to the screen."""
         surface.blit(self._image, self._rect)
+
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._rect
 
 
 class Boss(Sprite):
@@ -196,12 +205,12 @@ class Boss(Sprite):
         if len(self._alien_bullets) < 10:
             # Left side bullet
             left_x: int = self._rect.left + 50
-            bullet1 = AlienBullet(left_x, self._rect.bottom, speed=6)
+            bullet1 = AlienBullet(left_x, self._rect.bottom)
             self._alien_bullets.add(bullet1)
 
             # Right side bullet
             right_x: int = self._rect.right - 50
-            bullet2 = AlienBullet(right_x, self._rect.bottom, speed=6)
+            bullet2 = AlienBullet(right_x, self._rect.bottom)
             self._alien_bullets.add(bullet2)
 
     def update_cooldown(self) -> None:
@@ -249,3 +258,19 @@ class Boss(Sprite):
     def blitme(self, surface: pygame.Surface) -> None:
         """Draw the boss to the screen."""
         surface.blit(self._image, self._rect)
+
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._rect
+
+    @property
+    def boss_health(self) -> int:
+        return self._boss_health
+
+    @property
+    def max_health(self) -> int:
+        return self._max_boss_health

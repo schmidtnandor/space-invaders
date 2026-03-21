@@ -30,7 +30,7 @@ class Player(pygame.sprite.Sprite):
         self._health = self.config.player_health
         self._screen_width = self.config.screen_width
         self._screen_height = self.config.screen_height
-        self._speed = 15
+        self._speed = self.config.player_speed
 
         # Kép betöltése és optimalizálása
         self._image = pygame.image.load("grafika/player.png").convert_alpha()
@@ -99,3 +99,19 @@ class Player(pygame.sprite.Sprite):
         self._bullet: Bullet = Bullet(self._rect.centerx, self._rect.top + 50)
         self._bullets.add(self._bullet)
         return self._bullet
+
+    @property
+    def health(self) -> int:
+        return self._health
+
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._rect
+
+    @property
+    def bullets(self) -> pygame.sprite.Group[Any]:
+        return self._bullets
