@@ -1,46 +1,40 @@
 """Player ship and fire control."""
 
 # pylint: disable=too-many-instance-attributes,no-member
-
+from typing import Any
 import pygame
 from bullet import Bullet  # imported here to allow precise typing
 
 
 class Player(pygame.sprite.Sprite):
-    """The player's spaceship and input-handling logic."""
 
-    def __init__(self, screen_width: int, screen_height: int):
+    def __init__(self, screen_width: int, screen_height: int) -> None:
         super().__init__()
-<<<<<<< HEAD
-        self.health = 25
-=======
-        self.health = 20
->>>>>>> 7b5db0c6efb595f78ce512a49186f67e3523e12b
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        self.health: int = 20
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
 
         # Kép betöltése és optimalizálása
-        self.image = pygame.image.load("grafika/player.png").convert_alpha()
+        self.image: pygame.Surface = pygame.image.load(
+            "grafika/player.png"
+        ).convert_alpha()
         self.image = pygame.transform.scale(self.image, (100, 100))
-        self.rect = self.image.get_rect()
+        self.rect: pygame.Rect = self.image.get_rect()
 
         # Kezdőpozíció: lent, középen
         self.rect.midbottom = (screen_width // 2, screen_height - 50)
-        self.speed = 15
+        self.speed: int = 15
 
         # hitbox used for collision checks (smaller than the visible sprite)
-        self.hitbox = self.rect.inflate(-10, -90)
+        self.hitbox: pygame.Rect = self.rect.inflate(-10, -90)
 
         # group that holds bullets this player has fired
-        # `Group` typing is imperfect in pygame stubs; ignore the assignment error
-        self.bullets: pygame.sprite.Group[Bullet] = (
-            pygame.sprite.Group()  # type: ignore[assignment]
-        )
+        self.bullets: pygame.sprite.Group[Any] = pygame.sprite.Group()
 
-    def check_input(self):
+    def check_input(self) -> None:
         """Update player position based on keyboard input."""
-        keys = pygame.key.get_pressed()
-        moved = False
+        keys: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
+        moved: bool = False
         if (
             keys[pygame.K_LEFT]
             and self.rect.left > 25
@@ -85,8 +79,8 @@ class Player(pygame.sprite.Sprite):
             return (191, 201, 0)  # Yellow-green
         return (60, 200, 60)  # Green
 
-    def shoot(self):
+    def shoot(self) -> Bullet:
         """Create a bullet travelling upwards from the player's gun."""
-        bullet = Bullet(self.rect.centerx, self.rect.top + 50)
+        bullet: Bullet = Bullet(self.rect.centerx, self.rect.top + 50)
         self.bullets.add(bullet)
         return bullet

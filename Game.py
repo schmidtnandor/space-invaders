@@ -1,108 +1,111 @@
 """Main game loop and object orchestration for Space Invaders clone."""
+
 # pylint: disable=invalid-name,too-many-instance-attributes,no-member,too-many-branches
 
+from typing import Any, cast
+
 import pygame
+from config import Config
 from player import Player
 from alien import Alien
+
 from block import Block
-from boss import Boss, BossMinion
+from boss import Boss
 
 
 class Game:
+    config: Config = Config()
     """Game engine state and logic."""
-    SCREEN_WIDTH = 1920
-    SCREEN_HEIGHT = 1080
-
-    # Alien configuration
-    ALIEN_ROWS = 3  # Number of rows of aliens
-    ALIEN_INITIAL_ROW_Y = 50  # Y position for first row
-    FLEET_SPEED = 0.7
-<<<<<<< HEAD
-    FLEET_DROP_DISTANCE = 23
-    FLEET_DROP_SPEED = 1.0  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 170  # Milliseconds between shots (0.5 seconds)
-=======
-    FLEET_DROP_DISTANCE = 35
-    FLEET_DROP_SPEED = 1.5  # Pixels per frame while dropping
-    SHOOT_COOLDOWN = 200  # Milliseconds between shots (0.5 seconds)
-
->>>>>>> 7b5db0c6efb595f78ce512a49186f67e3523e12b
 
     def __init__(self) -> None:
 
         self.screen: pygame.Surface = pygame.display.set_mode(
-            (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+            (self.config.screen_width, self.config.screen_height)
         )
         pygame.display.set_caption("Space Invaders")
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.running: bool = True
 
         # Initialize player
-        self.player = Player(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.player: Player = Player(
+            self.config.screen_width, self.config.screen_height
+        )
+
+        # Cache frequently used config values as typed attributes.
+        self.screen_width: int = self.config.screen_width
+        self.screen_height: int = self.config.screen_height
+        self.alien_rows: int = self.config.alien_rows
+        self.alien_initial_row_y: int = self.config.alien_initial_row_y
+        self.fleet_drop_distance: int = self.config.fleet_drop_distance
+        self.fleet_drop_speed: float = self.config.fleet_drop_speed
+        self.shoot_cooldown: int = self.config.shoot_cooldown
 
         # Initialize blocks (cover/bunkers)
-        self.blocks = pygame.sprite.Group()
+        self.blocks: Any = pygame.sprite.Group()
         self._create_blocks()
 
         # Initialize aliens
-        self.aliens = pygame.sprite.Group()
-        self.alien_bullets = pygame.sprite.Group()  # Alien projectiles (max 3)
+        self.aliens: Any = pygame.sprite.Group()
+        self.alien_bullets: Any = pygame.sprite.Group()  # Alien projectiles (max 3)
 
         # Boss minions for wave 3
-        self.boss_minions = pygame.sprite.Group()
+        self.boss_minions: Any = pygame.sprite.Group()
 
         # Global fleet state (synchronized across all aliens when boundary is hit)
-        self.fleet_moving_right = True
-        self.fleet_is_dropping = False
-        self.fleet_drop_progress = 0.0
-        self.fleet_edge_cooldown = 0
-        self.fleet_speed = self.FLEET_SPEED
+        self.fleet_moving_right: bool = True
+        self.fleet_is_dropping: bool = False
+        self.fleet_drop_progress: float = 0.0
+        self.fleet_edge_cooldown: int = 0
+        self.fleet_speed: float = self.config.fleet_speed
 
         # Wave management: start on wave 1 and allow exactly 3 waves total
-        self.current_wave = 1
-        self.max_waves = 3
+        self.current_wave: int = 1
+        self.max_waves: int = 3
+        self.boss: Boss | None = None
 
-        # Boss state (only used on wave or boss for wave 3
-        if self.current_wave == 3:
-            self._create_boss()
-        else:
-            self.boss = None
-            # Create initial rows of aliens (not needed for wave 3 boss fight)
-            self._create_initial_aliens()
+        # Start in wave 1: no boss, create initial alien rows.
+        self.boss = None
+        self._create_initial_aliens()
 
         # Game over state (stops the loop and allows a final draw)
-        self.game_over = False
-        self.game_over_message = ""
+        self.game_over: bool = False
+        self.game_over_message: str = ""
 
         # Shoot cooldown tracking
-        self.last_shot_time = 0
+        self.last_shot_time: int = 0
 
     def _create_boss(self) -> None:
         """Create the boss for wave 3."""
-        self.boss = Boss(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.boss = Boss(self.config.screen_width, self.config.screen_height)
         self.boss.set_alien_bullets_group(self.alien_bullets)
 
     def _create_initial_aliens(self) -> None:
         """Create five full rows of aliens at game start."""
         # Get image dimensions to calculate proper spacing
-        temp_alien = Alien(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, 0, 0, 0)
-        alien_width = temp_alien.rect.width
-        alien_height = temp_alien.rect.height
+        temp_alien: Alien = Alien(
+            self.config.screen_width, self.config.screen_height, 0, 0, 0
+        )
+        alien_width: int = temp_alien.rect.width
+        alien_height: int = temp_alien.rect.height
         temp_alien.kill()  # Remove temporary alien
 
         # Calculate spacing with strict minimum gap to prevent any touching
-        min_gap = 8  # Match MIN_SPACING in Alien class to ensure no overlaps
-        total_width_per_alien = alien_width + min_gap
-        row_spacing = alien_height + min_gap  # Vertical spacing between rows
+        min_gap: int = 8  # Match MIN_SPACING in Alien class to ensure no overlaps
+        total_width_per_alien: int = alien_width + min_gap
+        row_spacing: int = alien_height + min_gap  # Vertical spacing between rows
 
         # Create five full rows of aliens
-        for row in range(self.ALIEN_ROWS):
-            x = 30  # Start position from left edge with padding
-            y = self.ALIEN_INITIAL_ROW_Y + (row * row_spacing)
+        for row in range(self.alien_rows):
+            x: int = 30  # Start position from left edge with padding
+            y: int = self.alien_initial_row_y + (row * row_spacing)
 
             # Fill each row with properly spaced aliens (full rows, not reduced)
-            while x + alien_width < self.SCREEN_WIDTH - 30:  # Leave padding on right edge
-                alien = Alien(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, x, y, row)
+            while (
+                x + alien_width < self.config.screen_width - 30
+            ):  # Leave padding on right edge
+                alien: Alien = Alien(
+                    self.config.screen_width, self.config.screen_height, x, y, row
+                )
 
                 # Wave 2 entry: start off-screen and glide into place invulnerable
                 if self.current_wave == 2:
@@ -131,7 +134,7 @@ class Game:
         self.fleet_is_dropping = False
         self.fleet_drop_progress = 0.0
         self.fleet_edge_cooldown = 0
-        self.fleet_speed = self.FLEET_SPEED
+        self.fleet_speed = self.config.fleet_speed
 
     def _start_next_wave(self) -> None:
         """Start the next wave if within allowed limits, otherwise win."""
@@ -141,13 +144,13 @@ class Game:
 
             self.current_wave += 1
             self._prepare_wave()
-            
+
             # Wave 3 is the boss fight
             if self.current_wave == 3:
                 self._create_boss()
             else:
                 self._create_initial_aliens()
-            
+
             print(f"Starting wave {self.current_wave}/{self.max_waves}")
         else:
             self._trigger_game_over("All waves defeated")
@@ -163,7 +166,6 @@ class Game:
         # Do not quit pygame here: return to menu for replay or exit.
         # pygame.quit() is managed by the menu/app level.
 
-
     def handle_events(self) -> None:
         """Process input events."""
         for event in pygame.event.get():
@@ -172,7 +174,7 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     current_time = pygame.time.get_ticks()
-                    if current_time - self.last_shot_time >= self.SHOOT_COOLDOWN:
+                    if current_time - self.last_shot_time >= self.shoot_cooldown:
                         self.player.shoot()
                         self.last_shot_time = current_time
                 elif event.key == pygame.K_k:
@@ -185,8 +187,8 @@ class Game:
 
     def _update_wave_entry(self) -> bool:
         """Animate wave entry for new wave allies, return True if any still animating."""
-        entry_speed = 3.0
-        still_animating = False
+        entry_speed: float = 3.0
+        still_animating: bool = False
 
         for alien in self.aliens:
             if alien.entry_animating:
@@ -212,9 +214,9 @@ class Game:
             self.fleet_edge_cooldown -= 1
 
         if self.fleet_is_dropping:
-            self.fleet_drop_progress += self.FLEET_DROP_SPEED
+            self.fleet_drop_progress += self.fleet_drop_speed
 
-            if self.fleet_drop_progress >= self.FLEET_DROP_DISTANCE:
+            if self.fleet_drop_progress >= self.fleet_drop_distance:
                 self.fleet_is_dropping = False
                 self.fleet_drop_progress = 0.0
 
@@ -224,9 +226,9 @@ class Game:
         if self.fleet_edge_cooldown > 0:
             return
 
-        boundary_hit = False
+        boundary_hit: bool = False
         for alien in self.aliens:
-            if self.fleet_moving_right and alien.rect.right >= self.SCREEN_WIDTH - 2:
+            if self.fleet_moving_right and alien.rect.right >= self.screen_width - 2:
                 boundary_hit = True
                 break
             if not self.fleet_moving_right and alien.rect.left <= 2:
@@ -237,7 +239,9 @@ class Game:
             self.fleet_moving_right = not self.fleet_moving_right
             self.fleet_is_dropping = True
             self.fleet_drop_progress = 0.0
-            self.fleet_edge_cooldown = 10  # Give fleet a short pause before next boundary check
+            self.fleet_edge_cooldown = (
+                10  # Give fleet a short pause before next boundary check
+            )
 
             # Speed up slightly as aliens are killed (optional classic feel)
             self.fleet_speed = min(6.0, self.fleet_speed + 0.05)
@@ -247,15 +251,15 @@ class Game:
     def _create_blocks(self) -> None:
         """Create protective blocks in front of the player."""
         # Create four larger blocks with more spacing, placed closer to the player.
-        block_count = 6
-        spacing = 175
-        total_width = block_count * Block.WIDTH + (block_count - 1) * spacing
-        start_x = (self.SCREEN_WIDTH - total_width) // 2
+        block_count: int = 6
+        spacing: int = 175
+        total_width: int = block_count * Block.WIDTH + (block_count - 1) * spacing
+        start_x: int = (self.config.screen_width - total_width) // 2
         # Place blocks very close to the player (player bullets still stop at the blocks).
-        start_y = self.player.rect.top - 60
+        start_y: int = self.player.rect.top - 60
 
         for i in range(block_count):
-            x = start_x + i * (Block.WIDTH + spacing)
+            x: int = start_x + i * (Block.WIDTH + spacing)
             self.blocks.add(Block(x, start_y))
 
     def _trigger_game_over(self, message: str) -> None:
@@ -275,7 +279,10 @@ class Game:
         if self._update_wave_entry():
             self.alien_bullets.update()
             for bullet in list(self.alien_bullets):
-                if bullet.rect.top < 0 or bullet.rect.bottom > self.SCREEN_HEIGHT:
+                if (
+                    bullet.rect.top < 0
+                    or bullet.rect.bottom > self.config.screen_height
+                ):
                     bullet.kill()
             return
 
@@ -287,7 +294,7 @@ class Game:
             alien.update_global_movement(
                 self.fleet_moving_right,
                 self.fleet_is_dropping,
-                self.FLEET_DROP_SPEED,
+                self.config.fleet_drop_speed,
             )
             alien.update_cooldown()  # Handle shooting
             alien.check_screen_boundaries()
@@ -315,7 +322,7 @@ class Game:
 
         # Remove alien bullets that have left the screen
         for bullet in list(self.alien_bullets):
-            if bullet.rect.top < 0 or bullet.rect.bottom > self.SCREEN_HEIGHT:
+            if bullet.rect.top < 0 or bullet.rect.bottom > self.config.screen_height:
                 bullet.kill()
 
         # Player bullets should not pass through blocks.
@@ -338,7 +345,9 @@ class Game:
                 continue
 
             hit_aliens = pygame.sprite.spritecollide(bullet, self.aliens, False)
-            vulnerable_aliens = [alien for alien in hit_aliens if not alien.invulnerable]
+            vulnerable_aliens: list[Alien] = [
+                alien for alien in hit_aliens if not alien.invulnerable
+            ]
             if vulnerable_aliens:
                 for alien in vulnerable_aliens:
                     alien.kill()
@@ -382,7 +391,9 @@ class Game:
                 self._start_next_wave()
 
         # Check if any minions reached the player
-        if pygame.sprite.spritecollide(self.player, self.boss_minions, False):
+        if pygame.sprite.spritecollide(
+            cast(Any, self.player), self.boss_minions, False
+        ):
             self.player.take_damage(1)
 
     def _draw_health_bar(self) -> None:
@@ -393,20 +404,24 @@ class Game:
         bar_y = 20
 
         # Draw background (dark)
-        pygame.draw.rect(self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(
+            self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height)
+        )
 
         # Draw health fill
-        health_fill_width = (self.player.health / 20) * bar_width
-        health_color = self.player.get_health_color()
+        health_fill_width: float = (self.player.health / 20) * bar_width
+        health_color: tuple[int, int, int] = self.player.get_health_color()
         pygame.draw.rect(
             self.screen, health_color, (bar_x, bar_y, health_fill_width, bar_height)
         )
 
         # Draw border
-        pygame.draw.rect(self.screen, (200, 200, 200), (bar_x, bar_y, bar_width, bar_height), 2)
+        pygame.draw.rect(
+            self.screen, (200, 200, 200), (bar_x, bar_y, bar_width, bar_height), 2
+        )
 
         # Draw health text
-        font = pygame.font.Font(None, 24)
+        font: pygame.font.Font = pygame.font.Font(None, 24)
         health_text = font.render(
             f"Health: {self.player.health}/20", True, (200, 200, 200)
         )
@@ -417,17 +432,21 @@ class Game:
         if not self.boss:
             return
 
-        bar_width = 300
-        bar_height = 30
-        bar_x = self.SCREEN_WIDTH - bar_width - 20
-        bar_y = 20
+        bar_width: int = 300
+        bar_height: int = 30
+        bar_x: float = self.config.screen_width - bar_width - 20
+        bar_y: int = 20
 
         # Draw background (dark)
-        pygame.draw.rect(self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(
+            self.screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height)
+        )
 
         # Draw health fill (yellow to red gradient based on health)
-        health_fill_width = (self.boss.boss_health / self.boss.max_health) * bar_width
-        health_percent = self.boss.get_health_percent()
+        health_fill_width: float = (
+            self.boss.boss_health / self.boss.max_health
+        ) * bar_width
+        health_percent: float = self.boss.get_health_percent()
 
         if health_percent <= 20:
             health_color = (255, 0, 0)  # Red
@@ -443,10 +462,12 @@ class Game:
         )
 
         # Draw border
-        pygame.draw.rect(self.screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height), 2)
+        pygame.draw.rect(
+            self.screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height), 2
+        )
 
         # Draw health text
-        font = pygame.font.Font(None, 24)
+        font: pygame.font.Font = pygame.font.Font(None, 24)
         health_text = font.render(
             f"Boss: {self.boss.boss_health}/{self.boss.max_health}",
             True,
@@ -465,7 +486,7 @@ class Game:
         self.screen.blit(self.player.image, self.player.rect)
 
         # Draw player hitbox for debugging
-        #pygame.draw.rect(self.screen, (0, 255, 0), self.player.hitbox, 2)
+        # pygame.draw.rect(self.screen, (0, 255, 0), self.player.hitbox, 2)
 
         # Draw aliens
         for alien in self.aliens:
@@ -492,7 +513,7 @@ class Game:
         self._draw_boss_health_bar()
 
         # Draw current wave indicator
-        wave_font = pygame.font.Font(None, 24)
+        wave_font: pygame.font.Font = pygame.font.Font(None, 24)
         wave_text = wave_font.render(
             f"Wave: {self.current_wave}/{self.max_waves}", True, (255, 255, 255)
         )
@@ -501,14 +522,23 @@ class Game:
         pygame.display.flip()
 
         if self.game_over:
-            font = pygame.font.SysFont(None, 72)
+            font: pygame.font.Font = pygame.font.SysFont(None, 72)
             text_surface = font.render("GAME OVER", True, (255, 0, 0))
-            text_rect = text_surface.get_rect(center=(self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT // 2))
+            text_rect = text_surface.get_rect(
+                center=(self.config.screen_width // 2, self.config.screen_height // 2)
+            )
             self.screen.blit(text_surface, text_rect)
 
-            subfont = pygame.font.SysFont(None, 36)
-            subtext_surface = subfont.render("Returning to main menu...", True, (255, 255, 255))
-            subtext_rect = subtext_surface.get_rect(center=(self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT // 2 + 60))
+            subfont: pygame.font.Font = pygame.font.SysFont(None, 36)
+            subtext_surface = subfont.render(
+                "Returning to main menu...", True, (255, 255, 255)
+            )
+            subtext_rect = subtext_surface.get_rect(
+                center=(
+                    self.config.screen_width // 2,
+                    self.config.screen_height // 2 + 60,
+                )
+            )
             self.screen.blit(subtext_surface, subtext_rect)
 
             pygame.display.flip()

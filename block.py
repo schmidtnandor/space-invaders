@@ -1,4 +1,5 @@
 """Block cover used for player protection."""
+
 # pylint: disable=no-member,too-few-public-methods
 
 import pygame
@@ -10,22 +11,26 @@ class Block(pygame.sprite.Sprite):
     Each block is divided into 9x9 cells. Bullets destroy one cell at a time.
     """
 
-    WIDTH = 108
-    HEIGHT = 45
-    CELL_SIZE = 9
-    DEAD_COLOR = (0, 0, 0)
+    WIDTH: int = 108
+    HEIGHT: int = 45
+    CELL_SIZE: int = 9
+    DEAD_COLOR: tuple[int, int, int] = (0, 0, 0)
 
     def __init__(self, x: int, y: int) -> None:
         super().__init__()
-        self.image = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
-        self.rect = self.image.get_rect(topleft=(x, y))
+        self.image: pygame.Surface = pygame.Surface(
+            (self.WIDTH, self.HEIGHT), pygame.SRCALPHA
+        )
+        self.rect: pygame.Rect = self.image.get_rect(topleft=(x, y))
 
-        self.cols = (self.WIDTH + self.CELL_SIZE - 1) // self.CELL_SIZE
-        self.rows = (self.HEIGHT + self.CELL_SIZE - 1) // self.CELL_SIZE
-        self.cells = [[True for _ in range(self.cols)] for _ in range(self.rows)]
+        self.cols: int = (self.WIDTH + self.CELL_SIZE - 1) // self.CELL_SIZE
+        self.rows: int = (self.HEIGHT + self.CELL_SIZE - 1) // self.CELL_SIZE
+        self.cells: list[list[bool]] = [
+            [True for _ in range(self.cols)] for _ in range(self.rows)
+        ]
 
         # Track remaining grid hits (starting at 72 as requested).
-        self.damage = 60
+        self.damage: int = 60
         self._update_image()
 
     def _alive_color(self) -> tuple[int, int, int]:
@@ -42,12 +47,14 @@ class Block(pygame.sprite.Sprite):
         return (60, 200, 60)
 
     def _update_image(self) -> None:
-        alive_color = self._alive_color()
+        alive_color: tuple[int, int, int] = self._alive_color()
         self.image.fill((0, 0, 0, 0))
         for row in range(self.rows):
             for col in range(self.cols):
-                color = alive_color if self.cells[row][col] else self.DEAD_COLOR
-                cell_rect = pygame.Rect(
+                color: tuple[int, int, int] = (
+                    alive_color if self.cells[row][col] else self.DEAD_COLOR
+                )
+                cell_rect: pygame.Rect = pygame.Rect(
                     col * self.CELL_SIZE,
                     row * self.CELL_SIZE,
                     self.CELL_SIZE,
@@ -57,13 +64,18 @@ class Block(pygame.sprite.Sprite):
 
     def take_damage_at(self, x: int, y: int) -> bool:
         """Mark the block grid cell as damaged by an incoming projectile."""
-        local_x = x - self.rect.left
-        local_y = y - self.rect.top
-        if local_x < 0 or local_y < 0 or local_x >= self.WIDTH or local_y >= self.HEIGHT:
+        local_x: int = x - self.rect.left
+        local_y: int = y - self.rect.top
+        if (
+            local_x < 0
+            or local_y < 0
+            or local_x >= self.WIDTH
+            or local_y >= self.HEIGHT
+        ):
             return False
 
-        col = local_x // self.CELL_SIZE
-        row = local_y // self.CELL_SIZE
+        col: int = local_x // self.CELL_SIZE
+        row: int = local_y // self.CELL_SIZE
 
         if row < 0 or row >= self.rows or col < 0 or col >= self.cols:
             return False
@@ -74,7 +86,7 @@ class Block(pygame.sprite.Sprite):
         self.cells[row][col] = False
         self.damage = max(0, self.damage - 1)
 
-        cell_rect = pygame.Rect(
+        cell_rect: pygame.Rect = pygame.Rect(
             col * self.CELL_SIZE,
             row * self.CELL_SIZE,
             self.CELL_SIZE,

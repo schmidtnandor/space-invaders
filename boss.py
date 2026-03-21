@@ -1,7 +1,9 @@
 """Boss enemy for wave 3."""
+
 # pylint: disable=too-many-instance-attributes,too-many-arguments
 
 import random
+from typing import Any
 import pygame
 from pygame.sprite import Sprite
 from alien_bullet import AlienBullet
@@ -10,7 +12,9 @@ from alien_bullet import AlienBullet
 class BossMinion(Sprite):
     """Small minion version of the boss that spawns at health checkpoints."""
 
-    def __init__(self, screen_width: int, screen_height: int, spawn_x: int = None):
+    def __init__(
+        self, screen_width: int, screen_height: int, spawn_x: int | None = None
+    ) -> None:
         """Initialize a boss minion.
 
         Args:
@@ -19,41 +23,39 @@ class BossMinion(Sprite):
             spawn_x: X coordinate to spawn at (defaults to center)
         """
         super().__init__()
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
 
         # Load and scale minion image (smaller version of boss)
-        self.image = pygame.image.load("grafika/minion.png")
+        self.image: pygame.Surface = pygame.image.load("grafika/minion.png")
         self.image = pygame.transform.scale(self.image, (80, 80))  # 80x80 px
-        
 
-        
-        self.rect = self.image.get_rect()
+        self.rect: pygame.Rect = self.image.get_rect()
 
         # Settings
-        self.minion_speed = 1.5
-        self.shoot_cooldown = 0
-        self.minion_health = 3  # Minions have less health
+        self.minion_speed: float = 1.5
+        self.shoot_cooldown: int = 0
+        self.minion_health: int = 3  # Minions have less health
 
         # Position at y=300
         if spawn_x is None:
             spawn_x = screen_width // 2
         self.rect.centerx = spawn_x
         self.rect.top = 300
-        self.x = float(self.rect.x)
-        self.y = float(self.rect.y)
+        self.x: float = float(self.rect.x)
+        self.y: float = float(self.rect.y)
 
         # Movement direction
-        self.moving_right = random.choice([True, False])
+        self.moving_right: bool = random.choice([True, False])
 
         # Reference to alien bullets group
-        self.alien_bullets = None
+        self.alien_bullets: Any | None = None
 
-    def set_alien_bullets_group(self, alien_bullets):
+    def set_alien_bullets_group(self, alien_bullets: Any) -> None:
         """Store reference to alien bullets group for shooting."""
         self.alien_bullets = alien_bullets
 
-    def update_movement(self):
+    def update_movement(self) -> None:
         """Update minion horizontal movement."""
         if self.moving_right:
             self.x += self.minion_speed
@@ -72,7 +74,7 @@ class BossMinion(Sprite):
             self.x = float(self.rect.x)
             self.moving_right = True
 
-    def shoot(self):
+    def shoot(self) -> None:
         """Fire a bullet from the minion."""
         if self.alien_bullets is None:
             return
@@ -81,7 +83,7 @@ class BossMinion(Sprite):
             bullet = AlienBullet(self.rect.centerx, self.rect.bottom, speed=5)
             self.alien_bullets.add(bullet)
 
-    def update_cooldown(self):
+    def update_cooldown(self) -> None:
         """Update shooting cooldown and attempt to fire."""
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -102,7 +104,7 @@ class BossMinion(Sprite):
         self.minion_health = max(0, self.minion_health - amount)
         return self.minion_health > 0
 
-    def blitme(self, surface):
+    def blitme(self, surface: pygame.Surface) -> None:
         """Draw the minion to the screen."""
         surface.blit(self.image, self.rect)
 
@@ -110,7 +112,7 @@ class BossMinion(Sprite):
 class Boss(Sprite):
     """Boss enemy with 30 health that shoots from both sides."""
 
-    def __init__(self, screen_width: int, screen_height: int):
+    def __init__(self, screen_width: int, screen_height: int) -> None:
         """Initialize the boss.
 
         Args:
@@ -118,40 +120,40 @@ class Boss(Sprite):
             screen_height: Screen height
         """
         super().__init__()
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
 
         # Load and scale boss image to 200x200
-        self.image = pygame.image.load("grafika/boss.png")
+        self.image: pygame.Surface = pygame.image.load("grafika/boss.png")
         self.image = pygame.transform.scale(self.image, (200, 200))
-        self.rect = self.image.get_rect()
+        self.rect: pygame.Rect = self.image.get_rect()
 
         # Settings
-        self.boss_speed = 2.0
-        self.shoot_cooldown = 0
-        self.boss_health = 30  # Changeable health
-        self.max_health = 30
+        self.boss_speed: float = 2.0
+        self.shoot_cooldown: int = 0
+        self.boss_health: int = 30  # Changeable health
+        self.max_health: int = 30
 
         # Position at top center of screen
         self.rect.centerx = screen_width // 2
         self.rect.top = 50
-        self.x = float(self.rect.x)
-        self.y = float(self.rect.y)
+        self.x: float = float(self.rect.x)
+        self.y: float = float(self.rect.y)
 
         # Movement direction
-        self.moving_right = True
+        self.moving_right: bool = True
 
         # Reference to alien bullets group
-        self.alien_bullets = None
+        self.alien_bullets: Any | None = None
 
         # Track which health checkpoints have spawned minions
-        self.spawned_at_health = set()
+        self.spawned_at_health: set[int] = set()
 
-    def set_alien_bullets_group(self, alien_bullets):
+    def set_alien_bullets_group(self, alien_bullets: Any) -> None:
         """Store reference to alien bullets group for shooting."""
         self.alien_bullets = alien_bullets
 
-    def update_movement(self):
+    def update_movement(self) -> None:
         """Update boss horizontal movement with screen boundary bouncing."""
         # Randomly reverse direction occasionally to make boss movement less predictable.
         # Use a low chance so movement remains mostly smooth.
@@ -175,7 +177,7 @@ class Boss(Sprite):
             self.x = float(self.rect.x)
             self.moving_right = True
 
-    def shoot(self):
+    def shoot(self) -> None:
         """Fire two bullets from both sides of the boss."""
         if self.alien_bullets is None:
             return
@@ -183,16 +185,16 @@ class Boss(Sprite):
         # Check if we can fire
         if len(self.alien_bullets) < 10:
             # Left side bullet
-            left_x = self.rect.left + 50
+            left_x: int = self.rect.left + 50
             bullet1 = AlienBullet(left_x, self.rect.bottom, speed=6)
             self.alien_bullets.add(bullet1)
 
             # Right side bullet
-            right_x = self.rect.right - 50
+            right_x: int = self.rect.right - 50
             bullet2 = AlienBullet(right_x, self.rect.bottom, speed=6)
             self.alien_bullets.add(bullet2)
 
-    def update_cooldown(self):
+    def update_cooldown(self) -> None:
         """Update shooting cooldown and attempt to fire."""
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -202,7 +204,7 @@ class Boss(Sprite):
                 self.shoot()
                 self.shoot_cooldown = 30  # Cooldown of 30 frames (~0.5 seconds)
 
-    def take_damage(self, amount: int = 1):
+    def take_damage(self, amount: int = 1) -> tuple[bool, list[BossMinion]]:
         """Reduce boss health and return any spawned minions.
 
         Args:
@@ -214,14 +216,20 @@ class Boss(Sprite):
         self.boss_health = max(0, self.boss_health - amount)
 
         # Check if we should spawn minions at health checkpoints
-        minions = []
-        checkpoints = [27, 24, 21, 18, 15, 12, 9, 6, 3]
+        minions: list[BossMinion] = []
+        checkpoints: list[int] = [27, 24, 21, 18, 15, 12, 9, 6, 3]
 
-        if self.boss_health in checkpoints and self.boss_health not in self.spawned_at_health:
+        if (
+            self.boss_health in checkpoints
+            and self.boss_health not in self.spawned_at_health
+        ):
             self.spawned_at_health.add(self.boss_health)
             # Spawn a minion at boss position, y will be set to 300 by BossMinion
-            minion = BossMinion(self.screen_width, self.screen_height, spawn_x=self.rect.centerx)
-            minion.set_alien_bullets_group(self.alien_bullets)
+            minion = BossMinion(
+                self.screen_width, self.screen_height, spawn_x=self.rect.centerx
+            )
+            if self.alien_bullets is not None:
+                minion.set_alien_bullets_group(self.alien_bullets)
             minions.append(minion)
 
         return self.boss_health > 0, minions
@@ -230,6 +238,6 @@ class Boss(Sprite):
         """Get boss health as a percentage."""
         return (self.boss_health / self.max_health) * 100
 
-    def blitme(self, surface):
+    def blitme(self, surface: pygame.Surface) -> None:
         """Draw the boss to the screen."""
         surface.blit(self.image, self.rect)

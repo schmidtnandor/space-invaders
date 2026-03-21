@@ -2,6 +2,7 @@
 
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-many-positional-arguments
 import random
+from typing import Any
 import pygame
 from pygame.sprite import Sprite
 from alien_bullet import AlienBullet
@@ -11,7 +12,7 @@ class Alien(Sprite):
     """Egy osztály, amely egyetlen idegent képvisel a flottában."""
 
     # Settings
-    alien_speed: int
+    alien_speed: float
     alien_shoot_intensity: int
     alien_shoot_damage: int
     alien_hp: int
@@ -26,7 +27,7 @@ class Alien(Sprite):
         x: int = 0,
         y: int = 0,
         row_index: int = 0,
-    ):
+    ) -> None:
         """Az idegen inicializálása és kezdőpozíciójának beállítása.
 
         Args:
@@ -37,20 +38,20 @@ class Alien(Sprite):
             row_index: Az idegen sora (0-4)
         """
         super().__init__()
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-        self.row_index = row_index  # Track which row this alien belongs to
+        self.screen_width: int = screen_width
+        self.screen_height: int = screen_height
+        self.row_index: int = row_index  # Track which row this alien belongs to
 
         # Kép betöltése és 1.5x-szeresére skálázása az aktuális mérethez képest
-        self.image = pygame.image.load("grafika/enemy.png")
+        self.image: pygame.Surface = pygame.image.load("grafika/enemy.png")
         # Scale to 1.5x of the 1/7 size: (1/7) * 1.5 = 1.5/7 ≈ 0.214
-        original_width = self.image.get_width()
-        original_height = self.image.get_height()
-        scale_factor = 1.5 / 4.5  # 1.5x the 1/7 size
-        scaled_width = int(original_width * scale_factor)
-        scaled_height = int(original_height * scale_factor)
+        original_width: int = self.image.get_width()
+        original_height: int = self.image.get_height()
+        scale_factor: float = 1.5 / 4.5  # 1.5x the 1/7 size
+        scaled_width: int = int(original_width * scale_factor)
+        scaled_height: int = int(original_height * scale_factor)
         self.image = pygame.transform.scale(self.image, (scaled_width, scaled_height))
-        self.rect = self.image.get_rect()
+        self.rect: pygame.Rect = self.image.get_rect()
 
         # Settings
         self.alien_speed: float = 1.0  # Classic invaders pace
@@ -67,19 +68,21 @@ class Alien(Sprite):
         # Pozíció beállítása
         self.rect.x = x
         self.rect.y = y
-        self.x = float(self.rect.x)
-        self.y = float(self.rect.y)
+        self.x: float = float(self.rect.x)
+        self.y: float = float(self.rect.y)
 
         # Reference to all aliens for collision checking (set by Game after creation)
-        self.aliens_group = None
-        self.alien_bullets = None  # Reference to alien bullets group (set by Game)
+        self.aliens_group: Any | None = None
+        self.alien_bullets: Any | None = (
+            None  # Reference to alien bullets group (set by Game)
+        )
 
     def update_global_movement(
         self,
         fleet_moving_right: bool,
         fleet_is_dropping: bool,
         fleet_drop_speed: float,
-    ):
+    ) -> None:
         """Classic Space Invaders fleet movement.
 
         Aliens move in sync, then all drop when the fleet hits a screen edge.
@@ -92,15 +95,15 @@ class Alien(Sprite):
             self.x += dx
             self.rect.x = int(self.x)
 
-    def set_aliens_group(self, aliens_group):
+    def set_aliens_group(self, aliens_group: Any) -> None:
         """Store reference to all aliens for collision checking."""
         self.aliens_group = aliens_group
 
-    def set_alien_bullets_group(self, alien_bullets):
+    def set_alien_bullets_group(self, alien_bullets: Any) -> None:
         """Store reference to alien bullets group for shooting."""
         self.alien_bullets = alien_bullets
 
-    def shoot(self):
+    def shoot(self) -> None:
         """Fire a projectile downward if available space exists (max 5 total)."""
         if self.alien_bullets is None:
             return
@@ -110,7 +113,7 @@ class Alien(Sprite):
             bullet = AlienBullet(self.rect.centerx, self.rect.bottom)
             self.alien_bullets.add(bullet)
 
-    def update_cooldown(self):
+    def update_cooldown(self) -> None:
         """Update shooting cooldown and attempt random fire."""
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -120,7 +123,7 @@ class Alien(Sprite):
                 self.shoot()
                 self.shoot_cooldown = 15  # Cooldown of 15 frames (~0.25 seconds)
 
-    def check_screen_boundaries(self):
+    def check_screen_boundaries(self) -> None:
         """Enforce screen boundaries without direction changes.
 
         Global fleet logic handles direction changes.
@@ -144,7 +147,7 @@ class Alien(Sprite):
         if self.rect.top >= self.screen_height:
             self.kill()
 
-    def check_collision_with_aliens(self, aliens_group):
+    def check_collision_with_aliens(self, aliens_group: Any) -> None:
         """Enforce spacing to prevent overlapping by neutralizing velocity on collision.
 
         If two alien hitboxes collide, velocity is neutralized to prevent overlapping.
@@ -153,16 +156,14 @@ class Alien(Sprite):
             aliens_group: Az összes idegent tartalmazó sprite csoport
         """
         # Only check collisions with aliens in the same row
-        row_aliens = [
+        row_aliens: list[Alien] = [
             alien
             for alien in aliens_group
             if alien.row_index == self.row_index and alien is not self
         ]
 
-        colliding = [
-            alien
-            for alien in row_aliens
-            if self.rect.colliderect(alien.rect)
+        colliding: list[Alien] = [
+            alien for alien in row_aliens if self.rect.colliderect(alien.rect)
         ]
 
         if colliding:
@@ -183,6 +184,6 @@ class Alien(Sprite):
                 self.rect.top = 0
                 self.y = float(self.rect.y)
 
-    def blitme(self, screen: pygame.Surface):
+    def blitme(self, screen: pygame.Surface) -> None:
         """Kirajzolás."""
         screen.blit(self.image, self.rect)
