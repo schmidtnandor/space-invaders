@@ -32,12 +32,10 @@ class Player(pygame.sprite.Sprite):
         self._screen_height = self.config.screen_height
         self._speed = self.config.player_speed
 
-        # Kép betöltése és optimalizálása
         self._image = pygame.image.load("grafika/player.png").convert_alpha()
         self._image = pygame.transform.scale(self._image, (100, 100))
         self._rect = self._image.get_rect()
 
-        # Kezdőpozíció: lent, középen
         self._rect.midbottom = (self._screen_width // 2, self._screen_height - 50)
 
         # hitbox used for collision checks (smaller than the visible sprite)
@@ -47,7 +45,6 @@ class Player(pygame.sprite.Sprite):
         self._bullets = pygame.sprite.Group()
 
     def check_input(self) -> None:
-        """Update player position based on keyboard input."""
         self._keys = pygame.key.get_pressed()
         self._moved = False
         if (
@@ -72,15 +69,12 @@ class Player(pygame.sprite.Sprite):
             self._hitbox.center = self._rect.center
 
     def take_damage(self, amount: int = 1) -> None:
-        """Reduce health when hit by an alien bullet."""
         self._health = max(0, self._health - amount)
 
     def heal(self, amount: int = 10) -> None:
-        """Restore player health (capped by max health)."""
         self._health = min(self.config.player_health, self._health + amount)
 
     def get_health_color(self) -> tuple[int, int, int]:
-        """Get the health bar color based on current health percentage."""
         self._health_percent = (self._health / self.config.player_health) * 100
         if self._health_percent <= 10:
             return (255, 0, 0)  # Red
@@ -95,7 +89,6 @@ class Player(pygame.sprite.Sprite):
         return (60, 200, 60)  # Green
 
     def shoot(self) -> Bullet:
-        """Create a bullet travelling upwards from the player's gun."""
         self._bullet: Bullet = Bullet(self._rect.centerx, self._rect.top + 50)
         self._bullets.add(self._bullet)
         return self._bullet

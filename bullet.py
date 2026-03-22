@@ -1,5 +1,3 @@
-"""Player bullet sprite implementation."""
-
 # pylint: disable=no-member,too-few-public-methods
 
 import pygame
@@ -7,14 +5,8 @@ from config import Config
 
 
 class Bullet(pygame.sprite.Sprite):
-    """A small projectile fired by the player.
 
-    The bullet moves straight up and destroys itself when it leaves the
-    top of the screen.  It is a simple white rectangle by default but you
-    can swap in an image or add more behaviour later.
-    """
-
-    config: Config = Config()
+    _config: Config = Config()
     _image: pygame.Surface
     _rect: pygame.Rect
     _speed: int
@@ -25,7 +17,7 @@ class Bullet(pygame.sprite.Sprite):
         self._image: pygame.Surface = pygame.Surface((5, 15))
         self._image.fill((255, 255, 255))
         self._rect: pygame.Rect = self._image.get_rect(midbottom=(x, y))
-        self._speed = self.config.bullet_speed
+        self._speed = self._config.bullet_speed
 
     def update(self) -> None:
         """Move the player bullet upward and destroy it off-screen."""

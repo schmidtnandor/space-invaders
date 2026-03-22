@@ -14,8 +14,7 @@ from boss import Boss
 
 
 class Game:
-    config: Config = Config()
-    """Game engine state and logic."""
+    _config: Config = Config()
 
     _screen: pygame.Surface
     _clock: pygame.time.Clock
@@ -44,8 +43,8 @@ class Game:
     _last_shot_time: int
 
     def __init__(self) -> None:
-        self._screen_width = self.config.screen_width
-        self._screen_height = self.config.screen_height
+        self._screen_width = self._config.screen_width
+        self._screen_height = self._config.screen_height
         self._screen = pygame.display.set_mode(
             (self._screen_width, self._screen_height)
         )
@@ -56,15 +55,13 @@ class Game:
         # Initialize player
         self._player = Player()
 
-        # Cache frequently used config values as typed attributes.
+        self._alien_rows = self._config.alien_rows
+        self._alien_initial_row_y = self._config.alien_initial_row_y
+        self._fleet_drop_distance = self._config.fleet_drop_distance
+        self._fleet_drop_speed = self._config.fleet_drop_speed
+        self._shoot_cooldown = self._config.shoot_cooldown
 
-        self._alien_rows = self.config.alien_rows
-        self._alien_initial_row_y = self.config.alien_initial_row_y
-        self._fleet_drop_distance = self.config.fleet_drop_distance
-        self._fleet_drop_speed = self.config.fleet_drop_speed
-        self._shoot_cooldown = self.config.shoot_cooldown
-
-        # Initialize blocks (cover/bunkers)
+        # Initialize blocks
         self._blocks = pygame.sprite.Group()
         self._create_blocks()
 
@@ -80,19 +77,14 @@ class Game:
         self._fleet_is_dropping = False
         self._fleet_drop_progress = 0.0
         self._fleet_edge_cooldown = 0
-        self._fleet_speed = self.config.fleet_speed
+        self._fleet_speed = self._config.fleet_speed
 
-        # Wave management: start on wave 1 and allow exactly 3 waves total
         self._current_wave = 1
         self._boss = None
 
-        # Start in wave 1: no boss, create initial alien rows.
-        self._boss = None
         self._create_initial_aliens()
 
-        # Game over state (stops the loop and allows a final draw)
         self._game_over = False
-        self._game_over_message = ""
 
         # Shoot cooldown tracking
         self._last_shot_time = 0
@@ -103,7 +95,6 @@ class Game:
         self._boss.set_alien_bullets_group(self._alien_bullets)
 
     def _create_initial_aliens(self) -> None:
-        """Create five full rows of aliens at game start."""
         # Get image dimensions to calculate proper spacing
         temp_alien: Alien = Alien(0, 0, 0)
         alien_width: int = temp_alien.rect.width
@@ -111,7 +102,7 @@ class Game:
         temp_alien.kill()  # Remove temporary alien
 
         # Calculate spacing with strict minimum gap to prevent any touching
-        min_gap: int = 8  # Match MIN_SPACING in Alien class to ensure no overlaps
+        min_gap: int = 8
         total_width_per_alien: int = alien_width + min_gap
         row_spacing: int = alien_height + min_gap  # Vertical spacing between rows
 
@@ -128,11 +119,10 @@ class Game:
 
                 # Wave 2 entry: start off-screen and glide into place invulnerable
                 if self._current_wave == 2:
-                    alien.entry_animating = True
-                    alien.invulnerable = True
-                    alien.entry_target_y = float(y)
-                    alien.y = -alien_height - 20.0  # Start just above the top
-                    alien.rect.y = int(alien.y)
+                    alien.begin_entry_animation(
+                        target_y=float(y),
+                        start_y=-alien_height - 20.0,  # Start just above the top
+                    )
 
                 self._aliens.add(alien)
                 x += total_width_per_alien
@@ -141,10 +131,9 @@ class Game:
         for alien in self._aliens:
             alien.set_aliens_group(self._aliens)
             alien.set_alien_bullets_group(self._alien_bullets)
-            alien.alien_speed = self._fleet_speed
+            alien.set_fleet_speed(self._fleet_speed)
 
     def _prepare_wave(self) -> None:
-        """Prepare state for the next wave of aliens."""
         self._aliens.empty()
         self._alien_bullets.empty()
         self._boss_minions.empty()
@@ -153,11 +142,10 @@ class Game:
         self._fleet_is_dropping = False
         self._fleet_drop_progress = 0.0
         self._fleet_edge_cooldown = 0
-        self._fleet_speed = self.config.fleet_speed
+        self._fleet_speed = self._config.fleet_speed
 
     def _start_next_wave(self) -> None:
-        """Start the next wave if within allowed limits, otherwise win."""
-        if self._current_wave < self.config.max_waves:
+        if self._current_wave < self._config.max_waves:
             # Heal player by 10 HP at wave transition (capped by heal() max).
             self._player.heal(10)
 
@@ -170,23 +158,18 @@ class Game:
             else:
                 self._create_initial_aliens()
 
-            print(f"Starting wave {self._current_wave}/{self.config.max_waves}")
+            print(f"Starting wave {self._current_wave}/{self._config.max_waves}")
         else:
             self._trigger_game_over("YOU WIN!")
 
     def run(self) -> None:
-        """Main game loop."""
         while self._running:
             self.handle_events()
             self.update()
             self.draw()
             self._clock.tick(60)
 
-        # Do not quit pygame here: return to menu for replay or exit.
-        # pygame.quit() is managed by the menu/app level.
-
     def handle_events(self) -> None:
-        """Process input events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self._running = False
@@ -205,29 +188,18 @@ class Game:
                     self._boss_minions.empty()
 
     def _update_wave_entry(self) -> bool:
-        """Animate wave entry for new wave allies, return True if any still animating."""
         entry_speed: float = 3.0
         still_animating: bool = False
 
         for alien in self._aliens:
             if alien.entry_animating:
                 still_animating = True
-                alien.y += entry_speed
-                if alien.y >= alien.entry_target_y:
-                    alien.y = alien.entry_target_y
-                    alien.entry_animating = False
-                    alien.invulnerable = False
-                alien.rect.y = int(alien.y)
+                alien.update_entry_animation(entry_speed)
 
         return still_animating
 
     def _update_global_fleet_state(self) -> None:
-        """Update global fleet state when ANY alien hits a boundary.
-
-        If ANY alien touches the left/right boundary:
-        - Reverse horizontal direction
-        - Enter drop phase for a fixed distance
-        """
+        #  Update global fleet state when ANY alien hits a boundary.
         # Decrease edge cooldown if recently reversed
         if self._fleet_edge_cooldown > 0:
             self._fleet_edge_cooldown -= 1
@@ -265,17 +237,15 @@ class Game:
             # Speed up slightly as aliens are killed (optional classic feel)
             self._fleet_speed = min(6.0, self._fleet_speed + 0.05)
             for alien in self._aliens:
-                alien.alien_speed = self._fleet_speed
+                alien.set_fleet_speed(self._fleet_speed)
 
     def _create_blocks(self) -> None:
-        """Create protective blocks in front of the player."""
-        # Create four larger blocks with more spacing, placed closer to the player.
+        # Create blocks with more spacing, placed closer to the player.
         block_count: int = 6
         spacing: int = 175
-        block_width: int = self.config.block_width
+        block_width: int = self._config.block_width
         total_width: int = block_count * block_width + (block_count - 1) * spacing
-        start_x: int = (self.config.screen_width - total_width) // 2
-        # Place blocks very close to the player (player bullets still stop at the blocks).
+        start_x: int = (self._config.screen_width - total_width) // 2
         start_y: int = self._player.rect.top - 60
 
         for i in range(block_count):
@@ -283,7 +253,6 @@ class Game:
             self._blocks.add(Block(x, start_y))
 
     def _trigger_game_over(self, message: str) -> None:
-        """End the game and set the game-over message."""
         if not self._game_over:
             self._game_over = True
             self._game_over_message = message
@@ -291,7 +260,6 @@ class Game:
             self._running = False
 
     def update(self) -> None:
-        """Update all game objects and collisions."""
         self._player.check_input()
         self._player.bullets.update()
 
@@ -301,7 +269,7 @@ class Game:
             for bullet in list(self._alien_bullets):
                 if (
                     bullet.rect.top < 0
-                    or bullet.rect.bottom > self.config.screen_height
+                    or bullet.rect.bottom > self._config.screen_height
                 ):
                     bullet.kill()
             return
@@ -314,14 +282,13 @@ class Game:
             alien.update_global_movement(
                 self._fleet_moving_right,
                 self._fleet_is_dropping,
-                self.config.fleet_drop_speed,
+                self._config.fleet_drop_speed,
             )
             alien.update_cooldown()  # Handle shooting
             alien.check_screen_boundaries()
             alien.check_collision_with_aliens(self._aliens)
 
-        # End game if any alien reaches 700px from the top
-        # (instead of colliding with the blocks)
+        # End game if any alien reaches the top
         for alien in self._aliens:
             if alien.rect.top >= 800:
                 self._trigger_game_over("Aliens reached the danger zone")
@@ -340,11 +307,6 @@ class Game:
         # Update alien bullets
         self._alien_bullets.update()
 
-        # Remove alien bullets that have left the screen
-        for bullet in list(self._alien_bullets):
-            if bullet.rect.top < 0 or bullet.rect.bottom > self.config.screen_height:
-                bullet.kill()
-
         # Player bullets should not pass through blocks.
         # The blocks don't take damage from the player, but they still stop bullets.
         for bullet in list(self._player.bullets):
@@ -360,7 +322,7 @@ class Game:
                     for minion in minions:
                         self._boss_minions.add(minion)
                 if not boss_alive:
-                    self._boss = None  # Boss defeated
+                    self._boss = None
                 bullet.kill()
                 continue
 
@@ -383,7 +345,6 @@ class Game:
                 bullet.kill()
                 continue
 
-        # Alien bullets should also collide with blocks and damage 9x9 cells.
         for bullet in list(self._alien_bullets):
             blocked = False
             for block in self._blocks:
@@ -417,7 +378,6 @@ class Game:
             self._player.take_damage(1)
 
     def _draw_health_bar(self) -> None:
-        """Draw the player's health bar at the top of the screen."""
         bar_width = 200
         bar_height = 20
         bar_x = 20
@@ -448,13 +408,12 @@ class Game:
         self._screen.blit(health_text, (bar_x + bar_width + 15, bar_y + 2))
 
     def _draw_boss_health_bar(self) -> None:
-        """Draw the boss's health bar at the top right of the screen."""
         if not self._boss:
             return
 
         bar_width: int = 300
         bar_height: int = 30
-        bar_x: float = self.config.screen_width - bar_width - 20
+        bar_x: float = self._config.screen_width - bar_width - 20
         bar_y: int = 20
 
         # Draw background (dark)
@@ -496,7 +455,6 @@ class Game:
         self._screen.blit(health_text, (bar_x + 10, bar_y + 5))
 
     def draw(self) -> None:
-        """Draw all renderable elements to the screen."""
         self._screen.fill((0, 0, 0))  # Background color set to black
 
         # Draw blocks
@@ -535,7 +493,7 @@ class Game:
         # Draw current wave indicator
         wave_font: pygame.font.Font = pygame.font.Font(None, 24)
         wave_text = wave_font.render(
-            f"Wave: {self._current_wave}/{self.config.max_waves}",
+            f"Wave: {self._current_wave}/{self._config.max_waves}",
             True,
             (255, 255, 255),
         )
@@ -553,7 +511,7 @@ class Game:
             )
             text_surface = font.render(title_text, True, title_color)
             text_rect = text_surface.get_rect(
-                center=(self.config.screen_width // 2, self.config.screen_height // 2)
+                center=(self._config.screen_width // 2, self._config.screen_height // 2)
             )
             self._screen.blit(text_surface, text_rect)
 
@@ -563,8 +521,8 @@ class Game:
             )
             subtext_rect = subtext_surface.get_rect(
                 center=(
-                    self.config.screen_width // 2,
-                    self.config.screen_height // 2 + 60,
+                    self._config.screen_width // 2,
+                    self._config.screen_height // 2 + 60,
                 )
             )
             self._screen.blit(subtext_surface, subtext_rect)
