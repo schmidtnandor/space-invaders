@@ -1,92 +1,110 @@
 """Player ship and fire control."""
 
+from __future__ import annotations
+
 # pylint: disable=too-many-instance-attributes,no-member
+from typing import Any
 
 import pygame
-from bullet import Bullet  # imported here to allow precise typing
+from bullet import Bullet
+from config import Config
 
 
 class Player(pygame.sprite.Sprite):
-    """The player's spaceship and input-handling logic."""
+    config: Config = Config()
+    _health: int
+    _screen_width: int
+    _screen_height: int
+    _image: pygame.Surface
+    _rect: pygame.Rect
+    _hitbox: pygame.Rect
+    _speed: int
+    _bullets: pygame.sprite.Group[Any]
+    _keys: pygame.key.ScancodeWrapper
+    _moved: bool
+    _health_percent: float
+    _bullet: Bullet
 
-    def __init__(self, screen_width: int, screen_height: int):
+    def __init__(self) -> None:
         super().__init__()
-<<<<<<< HEAD
-        self.health = 25
-=======
-        self.health = 20
->>>>>>> 7b5db0c6efb595f78ce512a49186f67e3523e12b
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        self._health = self.config.player_health
+        self._screen_width = self.config.screen_width
+        self._screen_height = self.config.screen_height
+        self._speed = self.config.player_speed
 
-        # Kép betöltése és optimalizálása
-        self.image = pygame.image.load("grafika/player.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (100, 100))
-        self.rect = self.image.get_rect()
+        self._image = pygame.image.load("grafika/player.png").convert_alpha()
+        self._image = pygame.transform.scale(self._image, (100, 100))
+        self._rect = self._image.get_rect()
 
-        # Kezdőpozíció: lent, középen
-        self.rect.midbottom = (screen_width // 2, screen_height - 50)
-        self.speed = 15
+        self._rect.midbottom = (self._screen_width // 2, self._screen_height - 50)
 
         # hitbox used for collision checks (smaller than the visible sprite)
-        self.hitbox = self.rect.inflate(-10, -90)
+        self._hitbox = self._rect.inflate(-10, -90)
 
         # group that holds bullets this player has fired
-        # `Group` typing is imperfect in pygame stubs; ignore the assignment error
-        self.bullets: pygame.sprite.Group[Bullet] = (
-            pygame.sprite.Group()  # type: ignore[assignment]
-        )
+        self._bullets = pygame.sprite.Group()
 
-    def check_input(self):
-        """Update player position based on keyboard input."""
-        keys = pygame.key.get_pressed()
-        moved = False
+    def check_input(self) -> None:
+        self._keys = pygame.key.get_pressed()
+        self._moved = False
         if (
-            keys[pygame.K_LEFT]
-            and self.rect.left > 25
-            or keys[pygame.K_a]
-            and self.rect.left > 25
+            self._keys[pygame.K_LEFT]
+            and self._rect.left > 25
+            or self._keys[pygame.K_a]
+            and self._rect.left > 25
         ):
-            self.rect.x -= self.speed
-            moved = True
+            self._rect.x -= self._speed
+            self._moved = True
         if (
-            keys[pygame.K_RIGHT]
-            and self.rect.right < self.screen_width - 25
-            or keys[pygame.K_d]
-            and self.rect.right < self.screen_width - 25
+            self._keys[pygame.K_RIGHT]
+            and self._rect.right < self._screen_width - 25
+            or self._keys[pygame.K_d]
+            and self._rect.right < self._screen_width - 25
         ):
-            self.rect.x += self.speed
-            moved = True
+            self._rect.x += self._speed
+            self._moved = True
 
         # if we changed position, move the hitbox as well
-        if moved:
-            self.hitbox.center = self.rect.center
+        if self._moved:
+            self._hitbox.center = self._rect.center
 
     def take_damage(self, amount: int = 1) -> None:
-        """Reduce health when hit by an alien bullet."""
-        self.health = max(0, self.health - amount)
+        self._health = max(0, self._health - amount)
 
     def heal(self, amount: int = 10) -> None:
-        """Restore player health (capped by max health)."""
-        self.health = min(20, self.health + amount)
+        self._health = min(self.config.player_health, self._health + amount)
 
     def get_health_color(self) -> tuple[int, int, int]:
-        """Get the health bar color based on current health percentage."""
-        health_percent = (self.health / 20) * 100
-        if health_percent <= 10:
+        self._health_percent = (self._health / self.config.player_health) * 100
+        if self._health_percent <= 10:
             return (255, 0, 0)  # Red
-        if health_percent <= 20:
+        if self._health_percent <= 20:
             return (255, 99, 0)  # Orange-red
-        if health_percent <= 30:
+        if self._health_percent <= 30:
             return (255, 132, 0)  # Orange
-        if health_percent <= 40:
+        if self._health_percent <= 40:
             return (255, 195, 0)  # Yellow
-        if health_percent <= 50:
+        if self._health_percent <= 50:
             return (191, 201, 0)  # Yellow-green
         return (60, 200, 60)  # Green
 
-    def shoot(self):
-        """Create a bullet travelling upwards from the player's gun."""
-        bullet = Bullet(self.rect.centerx, self.rect.top + 50)
-        self.bullets.add(bullet)
-        return bullet
+    def shoot(self) -> Bullet:
+        self._bullet: Bullet = Bullet(self._rect.centerx, self._rect.top + 50)
+        self._bullets.add(self._bullet)
+        return self._bullet
+
+    @property
+    def health(self) -> int:
+        return self._health
+
+    @property
+    def image(self) -> pygame.Surface:
+        return self._image
+
+    @property
+    def rect(self) -> pygame.Rect:
+        return self._rect
+
+    @property
+    def bullets(self) -> pygame.sprite.Group[Any]:
+        return self._bullets
